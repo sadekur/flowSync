@@ -7,7 +7,7 @@
     "dev:frontend": "cd frontend && next dev",
     "build:frontend": "cd frontend && next build",
     "start:frontend": "cd frontend && next start",
-    "lint:frontend": "cd frontend && eslint .",
+    "lint:frontend": "eslint frontend",
     "dev:backend": "echo \"backend not yet implemented — see Step 2\" && exit 1",
     "build:backend": "tsc -p backend/tsconfig.json",
     "start:backend": "node --env-file-if-exists=.env backend/dist/server.js",
