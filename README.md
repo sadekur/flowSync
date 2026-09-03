@@ -11,17 +11,18 @@ Real-time team collaboration platform (auth, workspaces/projects, tasks, chat, p
 
 ## Repo layout
 
-Single-package monorepo — **one** root `package.json` (all dependencies + scripts for both apps), **one** root `.env.example`, **one** root `tsconfig.base.json` of shared compiler options. `frontend/` and `backend/` hold only the files each tool mechanically requires in its own directory (Next.js needs `next.config.ts`/`tsconfig.json` beside its `src/`; the backend's `tsconfig.json` extends the same root base) — no per-app `package.json`, no per-app `.env`.
+Flat single-package repo — the Next.js app *is* the repo root (`src/`, `public/`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `eslint.config.mjs` all live at top level, since Next.js requires its config co-located with the app it builds). `backend/` is the one subfolder, and it has **no `tsconfig.json` at all** — `build:backend`/`typecheck:backend` invoke `tsc` directly against every file `find backend/src -name '*.ts'` turns up, with compiler options passed as CLI flags, so there's no second TypeScript config file anywhere in the repo. One root `package.json` (all dependencies + scripts for both apps), one root `.env.example`.
 
 ```
 flowSync/
-├── package.json, package-lock.json   # single manifest for both apps
-├── tsconfig.base.json                 # shared compiler options
-├── .env.example                        # single env file, both apps
-├── AGENTS.md, CLAUDE.md                # Next.js's own agent notes — `next dev` may re-scaffold local, gitignored copies in frontend/
-├── eslint.config.mjs                   # lints frontend/ from the root (settings.next.rootDir points at it)
-├── frontend/     # Next.js app (src/, public/, next.config.ts, tsconfig.json, postcss config)
-├── backend/      # Express + Socket.IO API (src/, tsconfig.json extending the root base)
+├── package.json, package-lock.json      # single manifest, both apps
+├── .env.example                          # single env file, both apps
+├── tsconfig.json                          # the only tsconfig.json in the repo (Next's)
+├── next.config.ts, postcss.config.mjs, eslint.config.mjs
+├── AGENTS.md, CLAUDE.md                   # Next.js's own agent notes, managed by `next dev`
+├── DECISIONS.md, PROGRESS.md, PLANNING.md, README.md
+├── src/, public/                          # the Next.js app
+├── backend/      # Express + Socket.IO API — src/, tests/, no config file (see above)
 └── docs/         # architecture, security, per-feature API docs
 ```
 
