@@ -43,12 +43,12 @@ cp .env.example .env         # fill in real values (JWT secrets, DB URIs)
 
 | Command | Runs |
 |---|---|
-| `npm run dev:frontend` | Next.js dev server (`frontend/`) |
+| `npm run dev:frontend` | Next.js dev server |
 | `npm run dev:backend` | Express + Socket.IO dev server (`backend/`) — added in Step 2 |
 | `npm run build:frontend` | Production Next.js build |
-| `npm run build:backend` | Compile backend TypeScript to `backend/dist` |
-| `npm run lint:frontend` | ESLint on the frontend |
-| `npm run typecheck:backend` | `tsc --noEmit` on the backend |
+| `npm run build:backend` | Compiles every `backend/src/**/*.ts` to `backend/dist` (no tsconfig.json — flags on the `tsc` CLI) |
+| `npm run lint:frontend` | ESLint on `src/` |
+| `npm run typecheck:backend` | Same file-discovery + flags, with `--noEmit` |
 
 ## Status
 
