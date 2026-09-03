@@ -8,9 +8,9 @@
     "build:frontend": "next build",
     "start:frontend": "next start",
     "lint:frontend": "eslint src",
-    "dev:backend": "echo \"backend not yet implemented — see Step 2\" && exit 1",
+    "dev:backend": "tsx watch backend/src/server.ts",
     "build:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --outDir backend/dist --rootDir backend/src --sourceMap; fi",
-    "start:backend": "node --env-file-if-exists=.env backend/dist/server.js",
+    "start:backend": "node backend/dist/server.js",
     "typecheck:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --noEmit --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --rootDir backend/src; fi"
   },
   "engines": {
