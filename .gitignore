@@ -10,12 +10,10 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
-# env files — never commit real secrets, only *.env.example files
+# env files — never commit real secrets, only .env.example
 .env
 .env.local
 .env.*.local
-backend/.env
-frontend/.env*
 
 # next.js (frontend/)
 frontend/.next/
