@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 2 (Backend bootstrap) code complete: `npm run typecheck:backend` and `npm run build:backend` pass clean, and the built server correctly fails fast with a clear error when Redis is unreachable (verified). **Not yet fully verified live** — Redis isn't installed locally yet, so `GET /api/health` returning `200` with both services connected hasn't been confirmed.
+Step 2 (Backend bootstrap) complete and fully verified live: Redis installed, `npm run dev:backend` runs cleanly, `GET /api/health` returns `200 ok` with both Mongo and Redis connected.
 
 ## Completed
 
