@@ -1,0 +1,20 @@
+{
+  "name": "flowsync-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FlowSync backend — Express + TypeScript + Socket.IO + MongoDB + Redis",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "echo \"backend not yet implemented — see Step 2\" && exit 1",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0"
+  }
+}
