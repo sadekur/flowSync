@@ -35,8 +35,8 @@ flowSync/
 ## Setup
 
 ```bash
-npm install                 # installs both workspaces from the repo root
-cp .env.example .env         # fill in real values (JWT secrets, DB URIs)
+npm install
+cp .env.example .env    # fill in real values (JWT secrets, DB URIs)
 ```
 
 ## Common commands (run from repo root)
