@@ -4,13 +4,13 @@
   "private": true,
   "description": "FlowSync — real-time team collaboration platform (Next.js + Express + Socket.IO + MongoDB + Redis)",
   "scripts": {
-    "dev:frontend": "next dev frontend",
-    "build:frontend": "next build frontend",
-    "start:frontend": "next start frontend",
+    "dev:frontend": "cd frontend && node --env-file-if-exists=../.env ../node_modules/.bin/next dev",
+    "build:frontend": "cd frontend && node --env-file-if-exists=../.env ../node_modules/.bin/next build",
+    "start:frontend": "cd frontend && node --env-file-if-exists=../.env ../node_modules/.bin/next start",
     "lint:frontend": "cd frontend && eslint .",
     "dev:backend": "echo \"backend not yet implemented — see Step 2\" && exit 1",
     "build:backend": "tsc -p backend/tsconfig.json",
-    "start:backend": "node backend/dist/server.js",
+    "start:backend": "node --env-file-if-exists=.env backend/dist/server.js",
     "typecheck:backend": "tsc -p backend/tsconfig.json --noEmit"
   },
   "engines": {
