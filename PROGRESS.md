@@ -11,7 +11,8 @@ Step 2 (Backend bootstrap) complete and fully verified live: Redis installed, `n
 - [x] `GET /api/health` — checks Mongo + Redis, documented in `docs/api/health.md`
 - [x] `npm run typecheck:backend`, `npm run build:backend` pass; verified nested-folder compilation and the no-Redis fail-fast path live
 
+- [x] Redis installed locally; `GET /api/health` verified live returning `200 ok` with both Mongo and Redis connected
+
 ## Next Steps
 
-1. Install Redis (`sudo apt install redis-server`) and confirm `GET /api/health` returns `200` with both services connected — blocking final Step 2 sign-off.
-2. **Step 3 — Authentication**: register/login/logout/refresh/me via JWT httpOnly cookies, using the `utils/jwt.ts` already in place.
+1. **Step 3 — Authentication**: register/login/logout/refresh/me via JWT httpOnly cookies, using the `utils/jwt.ts` already in place.
