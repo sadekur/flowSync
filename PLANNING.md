@@ -30,7 +30,7 @@ First build the normal CRUD application → then add Socket.IO → then add Redi
 
 Executed one at a time; each step ends with working code plus a `DECISIONS.md`/`PROGRESS.md` update, then pauses for review before the next step starts.
 
-1. **Project Setup** — monorepo scaffold (this step): `frontend/`, `backend/`, npm workspaces, root env/config, docs.
+1. **Project Setup** — repo scaffold (this step): Next.js app at the root, `backend/`, root env/config, docs.
 2. **Backend bootstrap** — Express + TS, Mongoose + Redis connections, JWT util, security middleware, `GET /api/health`.
 3. **Authentication** — register/login/logout/refresh/me via JWT httpOnly cookies.
 4. **Workspace & Project CRUD** — User/Workspace/Project/Task models + membership-scoped REST APIs.
