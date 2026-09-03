@@ -2,14 +2,12 @@ import type { NextConfig } from "next";
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
 
-// Single .env lives at the repo root (not per-app) — load it explicitly here
-// since Next.js only auto-loads .env files from its own project directory.
-// `--env-file` on the `node` CLI was tried instead but breaks Turbopack's
-// worker threads (NODE_OPTIONS can't carry --env-file), so this runs in code.
-// quiet: true — dotenv prints a random self-promotional "tip" string (incl.
-// third-party product ads) to stdout on every load otherwise; verified benign
-// (hash matches the public npm registry, no outbound network code) but noisy.
-loadEnv({ path: path.resolve(__dirname, "../.env"), quiet: true });
+// .env holds both backend-only and NEXT_PUBLIC_* vars in one file — Next.js
+// auto-loads it fine now that this config (and the app) live at the repo root.
+// Loaded explicitly anyway so `quiet: true` can suppress dotenv's console
+// "tip" (self-promotional string, incl. third-party product ads — verified
+// benign: hash matches the public npm registry, no outbound network code).
+loadEnv({ path: path.resolve(__dirname, ".env"), quiet: true });
 
 const nextConfig: NextConfig = {
   /* config options here */
