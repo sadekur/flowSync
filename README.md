@@ -11,7 +11,7 @@ Real-time team collaboration platform (auth, workspaces/projects, tasks, chat, p
 
 ## Repo layout
 
-Flat single-package repo — the Next.js app *is* the repo root (`src/`, `public/`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `eslint.config.mjs` all live at top level, since Next.js requires its config co-located with the app it builds). `backend/` is the one subfolder, and it has **no `tsconfig.json` at all** — `build:backend`/`typecheck:backend` invoke `tsc` directly against every file `find backend/src -name '*.ts'` turns up, with compiler options passed as CLI flags, so there's no second TypeScript config file anywhere in the repo. One root `package.json` (all dependencies + scripts for both apps), one root `.env.example`.
+Flat single-package repo — the Next.js app *is* the repo root. `backend/` is the one subfolder (Express API, no config file of its own — see `DECISIONS.md`).
 
 ```
 flowSync/
