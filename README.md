@@ -18,8 +18,9 @@ flowSync/
 ├── package.json, package-lock.json   # single manifest for both apps
 ├── tsconfig.base.json                 # shared compiler options
 ├── .env.example                        # single env file, both apps
-├── CLAUDE.md                           # → @frontend/AGENTS.md
-├── frontend/     # Next.js app (src/, public/, next.config.ts, tsconfig.json, eslint/postcss config, AGENTS.md — managed by `next dev`)
+├── AGENTS.md, CLAUDE.md                # Next.js's own agent notes — `next dev` may re-scaffold local, gitignored copies in frontend/
+├── eslint.config.mjs                   # lints frontend/ from the root (settings.next.rootDir points at it)
+├── frontend/     # Next.js app (src/, public/, next.config.ts, tsconfig.json, postcss config)
 ├── backend/      # Express + Socket.IO API (src/, tsconfig.json extending the root base)
 └── docs/         # architecture, security, per-feature API docs
 ```
