@@ -4,14 +4,14 @@
   "private": true,
   "description": "FlowSync — real-time team collaboration platform (Next.js + Express + Socket.IO + MongoDB + Redis)",
   "scripts": {
-    "dev:frontend": "cd frontend && next dev",
-    "build:frontend": "cd frontend && next build",
-    "start:frontend": "cd frontend && next start",
-    "lint:frontend": "eslint frontend",
+    "dev:frontend": "next dev",
+    "build:frontend": "next build",
+    "start:frontend": "next start",
+    "lint:frontend": "eslint src",
     "dev:backend": "echo \"backend not yet implemented — see Step 2\" && exit 1",
-    "build:backend": "tsc -p backend/tsconfig.json",
+    "build:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --outDir backend/dist --rootDir backend/src --sourceMap; fi",
     "start:backend": "node --env-file-if-exists=.env backend/dist/server.js",
-    "typecheck:backend": "tsc -p backend/tsconfig.json --noEmit"
+    "typecheck:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --noEmit --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --rootDir backend/src; fi"
   },
   "engines": {
     "node": ">=20"
