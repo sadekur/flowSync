@@ -15,18 +15,12 @@ node_modules/
 .env.local
 .env.*.local
 
-# next.js (frontend/)
-frontend/.next/
-frontend/out/
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
+# next.js (app lives at the repo root — no frontend/ folder)
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
 .vercel
-
-# `next dev` re-scaffolds these inside frontend/ on every run if it doesn't
-# find them there (see AGENTS.md / DECISIONS.md) — the real ones live at
-# the repo root, these are disposable local duplicates, never commit them.
-frontend/AGENTS.md
-frontend/CLAUDE.md
 
 # backend build output
 backend/dist/
