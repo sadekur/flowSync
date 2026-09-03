@@ -28,6 +28,6 @@
 - **Env loading**: `backend/src/config/env.ts` loads the root `.env` via `dotenv` (mirrors `next.config.ts`) and validates it through a `zod` schema, failing fast with a clear per-field message and `process.exit(1)` if anything required is missing/malformed — rather than surfacing a confusing error deep inside a request handler later.
 - **Redis client**: `ioredis`, with `lazyConnect: true` — connects explicitly in `server.ts` so startup fails fast (and loudly) if Redis is unreachable, instead of the app silently coming up "half-working."
 - **`http.createServer(app)`** in `server.ts` instead of `app.listen()` directly — no behavior difference yet, but lets Step 6 attach Socket.IO to the same server without touching this file.
-- **`GET /api/health`**: checks live `mongoose.connection.readyState` and a real Redis `PING`, returns `200`/`ok` or `503`/`degraded` — verified: fails fast with a clear error when Redis is down (confirmed with Redis not yet installed), and needs a real run against both services connected to confirm `200`.
+- **`GET /api/health`**: checks live `mongoose.connection.readyState` and a real Redis `PING`, returns `200`/`ok` or `503`/`degraded` — verified both paths live: fails fast with a clear error when Redis is down, and returns `200 ok` with both services connected once Redis was installed.
 
 Full step-by-step build plan lives in `PLANNING.md`.
