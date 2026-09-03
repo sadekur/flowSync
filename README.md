@@ -11,12 +11,17 @@ Real-time team collaboration platform (auth, workspaces/projects, tasks, chat, p
 
 ## Repo layout
 
-npm workspaces monorepo — one root `package.json`/`tsconfig.base.json`/`.env.example`, shared devDependencies hoisted to the root; each app keeps only its own runtime dependencies and a `tsconfig.json` that extends the root base config.
+Single-package monorepo — **one** root `package.json` (all dependencies + scripts for both apps), **one** root `.env.example`, **one** root `tsconfig.base.json` of shared compiler options. `frontend/` and `backend/` hold only the files each tool mechanically requires in its own directory (Next.js needs `next.config.ts`/`tsconfig.json` beside its `src/`; the backend's `tsconfig.json` extends the same root base) — no per-app `package.json`, no per-app `.env`.
 
 ```
 flowSync/
-├── frontend/     # Next.js app
-├── backend/      # Express + Socket.IO API
+├── package.json, package-lock.json   # single manifest for both apps
+├── tsconfig.base.json                 # shared compiler options
+├── .env.example                        # single env file, both apps
+├── AGENTS.md                           # Next.js's own agent notes (managed by `next dev`)
+├── CLAUDE.md                           # → @frontend/AGENTS.md
+├── frontend/     # Next.js app (src/, public/, next.config.ts, tsconfig.json, eslint/postcss config)
+├── backend/      # Express + Socket.IO API (src/, tsconfig.json extending the root base)
 └── docs/         # architecture, security, per-feature API docs
 ```
 
