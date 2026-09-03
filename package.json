@@ -7,7 +7,7 @@
     "dev:frontend": "next dev frontend",
     "build:frontend": "next build frontend",
     "start:frontend": "next start frontend",
-    "lint:frontend": "eslint frontend",
+    "lint:frontend": "eslint --config frontend/eslint.config.mjs frontend",
     "dev:backend": "echo \"backend not yet implemented — see Step 2\" && exit 1",
     "build:backend": "tsc -p backend/tsconfig.json",
     "start:backend": "node backend/dist/server.js",
