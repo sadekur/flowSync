@@ -66,7 +66,7 @@ export default async function DashboardPage() {
                 {workspace.projects.map((project) => (
                   <li key={project._id}>
                     <Link
-                      href={`/projects/${project._id}?workspace=${workspace._id}`}
+                      href={`/projects/${project.slug}?workspace=${workspace.slug}`}
                       className="text-sm font-medium underline underline-offset-2"
                     >
                       {project.name}
