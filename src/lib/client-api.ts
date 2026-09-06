@@ -18,7 +18,8 @@ export class ApiError extends Error {
 
 function readCookie(name: string): string | undefined {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : undefined;
+  const value = match?.[1];
+  return value !== undefined ? decodeURIComponent(value) : undefined;
 }
 
 // Browser-only: talks to the Express API directly with the real auth
