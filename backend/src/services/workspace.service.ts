@@ -3,10 +3,16 @@ import { Project } from "../models/Project";
 import { Task } from "../models/Task";
 import { User } from "../models/User";
 import { ApiError } from "../middleware/errorHandler";
+import { generateUniqueSlug } from "../utils/slug";
 import type { AddMemberInput, CreateWorkspaceInput, UpdateWorkspaceInput } from "../validators/workspace.validators";
 
 export async function createWorkspace(ownerId: string, input: CreateWorkspaceInput): Promise<WorkspaceDocument> {
-  return Workspace.create({ name: input.name, owner: ownerId, members: [ownerId] });
+  const slug = await generateUniqueSlug(input.name, async (candidate) => {
+    const existing = await Workspace.exists({ slug: candidate });
+    return existing !== null;
+  });
+
+  return Workspace.create({ name: input.name, slug, owner: ownerId, members: [ownerId] });
 }
 
 export async function listWorkspacesForUser(userId: string): Promise<WorkspaceDocument[]> {
