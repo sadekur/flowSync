@@ -5,8 +5,8 @@ import { Project } from "../models/Project";
 import { Task } from "../models/Task";
 import { ApiError } from "./errorHandler";
 
-function isValidObjectId(id: string | undefined): id is string {
-  return !!id && mongoose.Types.ObjectId.isValid(id);
+function isValidObjectId(id: unknown): id is string {
+  return typeof id === "string" && mongoose.Types.ObjectId.isValid(id);
 }
 
 export async function loadWorkspace(req: Request, _res: Response, next: NextFunction): Promise<void> {
