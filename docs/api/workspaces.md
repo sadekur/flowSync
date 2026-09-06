@@ -4,9 +4,11 @@
 
 A workspace has one `owner` (the creator) and a `members` array that always includes the owner. Only the owner can rename/delete the workspace or manage membership; any member can create/read/update/delete projects and tasks inside it (no finer-grained roles for the MVP — see `DECISIONS.md`).
 
+Every `:workspaceId` route param accepts **either the Mongo `_id` or the `slug`** (`middleware/membership.ts`'s `idOrSlugFilter`) — whichever the caller has. `slug` is generated once from `name` at creation and is globally unique; renaming a workspace does not change its slug.
+
 ## `POST /api/workspaces`
 
-Body: `{ "name": string }` → **201** `{ "workspace": {...} }` (creator becomes owner + sole member).
+Body: `{ "name": string }` → **201** `{ "workspace": {...} }` (creator becomes owner + sole member; `slug` generated from `name`).
 
 ## `GET /api/workspaces`
 
