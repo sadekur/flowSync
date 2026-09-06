@@ -30,7 +30,6 @@ userSchema.methods.comparePassword = function comparePassword(candidate: string)
 };
 
 userSchema.set("toJSON", {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mongoose's own transform typing is too strict to assign into
   transform: (_doc, ret: any) => {
     ret.passwordHash = undefined;
     ret.__v = undefined;
