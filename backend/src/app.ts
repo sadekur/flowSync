@@ -40,6 +40,9 @@ export function createApp(): Express {
 
   app.use("/api", healthRouter);
   app.use("/api", authRouter);
+  app.use("/api", workspaceRouter);
+  app.use("/api", projectRouter);
+  app.use("/api", taskRouter);
 
   app.use(notFound);
   app.use(errorHandler);
