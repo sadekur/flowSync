@@ -10,6 +10,7 @@ export interface User {
 export interface Workspace {
   _id: string;
   name: string;
+  slug: string;
   owner: string | User;
   members: (string | User)[];
   createdAt: string;
@@ -20,6 +21,7 @@ export interface Project {
   _id: string;
   workspace: string;
   name: string;
+  slug: string;
   description?: string;
   createdBy: string;
   createdAt: string;
