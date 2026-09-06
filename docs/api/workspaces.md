@@ -16,6 +16,8 @@ Workspaces the caller is a member of. **200** `{ "workspaces": [...] }`.
 
 **200** `{ "workspace": {...} }` · **403** not a member · **404** no such workspace.
 
+`owner` and `members` are populated here (`{ _id, name, email }` each) — the only workspace route that does this, since authorization checks elsewhere in `middleware/membership.ts` compare `members` as raw ObjectIds. The frontend uses this populated form to build the task-assignee dropdown (`src/app/projects/[id]/page.tsx`).
+
 ## `PATCH /api/workspaces/:workspaceId`
 
 Owner only. Body: `{ "name": string }` → **200** `{ "workspace": {...} }` · **403** not the owner.
