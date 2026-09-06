@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { ZodError } from "zod";
 import { logger } from "../utils/logger";
 import { isProduction } from "../config/env";
 
@@ -13,6 +14,14 @@ export class ApiError extends Error {
 
 // 4-arg signature is required — Express identifies error middleware by arity.
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      error: "Validation failed",
+      issues: err.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })),
+    });
+    return;
+  }
+
   const statusCode = err instanceof ApiError ? err.statusCode : 500;
   const message = err instanceof Error ? err.message : "Internal Server Error";
 
