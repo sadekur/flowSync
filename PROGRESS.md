@@ -20,4 +20,4 @@ Step 4 (Workspace & Project CRUD) complete and verified live: full Workspace/Pro
 
 ## Next Steps
 
-1. **Step 5 — Frontend shell**: `/login`, `/register`, `/dashboard`, `/projects/[id]` as Server Components; Redux store wired up. (Deferred by explicit choice — see `DECISIONS.md`.)
+1. **Step 5 — Frontend shell**: `/login`, `/register`, `/dashboard`, `/projects/[id]` as Server Components; Redux store wired up.
