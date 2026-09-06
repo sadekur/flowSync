@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 3 (Authentication) complete and verified live: register/login/logout/refresh/me all working end-to-end against the running dev server, including validation errors, duplicate-email rejection, wrong-password rejection, and CSRF enforcement on refresh/logout.
+Step 4 (Workspace & Project CRUD) complete and verified live: full Workspace/Project/Task CRUD with membership-scoped authorization, tested end-to-end with two real users against the running dev server (see below), then cleaned from the dev DB.
 
 ## Completed
 
