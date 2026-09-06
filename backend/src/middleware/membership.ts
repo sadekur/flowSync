@@ -9,14 +9,21 @@ function isValidObjectId(id: unknown): id is string {
   return typeof id === "string" && mongoose.Types.ObjectId.isValid(id);
 }
 
+// Workspace/Project URL params can be either the Mongo _id or the slug
+// (see utils/slug.ts) — whichever the frontend linked to.
+function idOrSlugFilter(param: unknown): Record<string, unknown> | null {
+  if (typeof param !== "string" || param.length === 0) return null;
+  return isValidObjectId(param) ? { _id: param } : { slug: param };
+}
+
 export async function loadWorkspace(req: Request, _res: Response, next: NextFunction): Promise<void> {
-  const { workspaceId } = req.params;
-  if (!isValidObjectId(workspaceId)) {
+  const filter = idOrSlugFilter(req.params.workspaceId);
+  if (!filter) {
     next(new ApiError(404, "Workspace not found"));
     return;
   }
 
-  const workspace = await Workspace.findById(workspaceId);
+  const workspace = await Workspace.findOne(filter);
   if (!workspace) {
     next(new ApiError(404, "Workspace not found"));
     return;
