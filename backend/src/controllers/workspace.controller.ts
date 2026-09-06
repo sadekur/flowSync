@@ -14,7 +14,16 @@ export async function list(req: Request, res: Response): Promise<void> {
 }
 
 export async function getOne(req: Request, res: Response): Promise<void> {
-  res.status(200).json({ workspace: req.workspace });
+  // Populated here only (not in the shared `loadWorkspace` middleware) so
+  // membership checks elsewhere keep comparing plain ObjectIds.
+  const workspace = await req.workspace!.populate<{
+    owner: { name: string; email: string };
+    members: { name: string; email: string }[];
+  }>([
+    { path: "owner", select: "name email" },
+    { path: "members", select: "name email" },
+  ]);
+  res.status(200).json({ workspace });
 }
 
 export async function update(req: Request, res: Response): Promise<void> {
