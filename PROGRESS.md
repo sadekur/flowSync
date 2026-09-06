@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 4 (Workspace & Project CRUD) complete and verified live: full Workspace/Project/Task CRUD with membership-scoped authorization, tested end-to-end with two real users against the running dev server (see below), then cleaned from the dev DB.
+Step 5 (Frontend shell) complete and verified live in the browser: register/login/dashboard/project pages working end-to-end against the real backend, including route protection, workspace/project/task creation, and task status updates.
 
 ## Completed
 
