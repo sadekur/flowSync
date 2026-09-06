@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 2 (Backend bootstrap) complete and fully verified live: Redis installed, `npm run dev:backend` runs cleanly, `GET /api/health` returns `200 ok` with both Mongo and Redis connected.
+Step 3 (Authentication) complete and verified live: register/login/logout/refresh/me all working end-to-end against the running dev server, including validation errors, duplicate-email rejection, wrong-password rejection, and CSRF enforcement on refresh/logout.
 
 ## Completed
 
@@ -10,9 +10,11 @@ Step 2 (Backend bootstrap) complete and fully verified live: Redis installed, `n
 - [x] Backend bootstrap: `config/env.ts` (dotenv + zod validation), `config/db.ts` (Mongoose), `config/redis.ts` (ioredis), `utils/jwt.ts`, `utils/logger.ts`, `utils/asyncHandler.ts`, `middleware/errorHandler.ts` + `notFound.ts`, `app.ts` (helmet, CORS scoped to `CORS_ORIGIN`, cookie-parser, JSON body parsing), `server.ts` (`http.createServer` + graceful shutdown)
 - [x] `GET /api/health` — checks Mongo + Redis, documented in `docs/api/health.md`
 - [x] `npm run typecheck:backend`, `npm run build:backend` pass; verified nested-folder compilation and the no-Redis fail-fast path live
-
 - [x] Redis installed locally; `GET /api/health` verified live returning `200 ok` with both Mongo and Redis connected
+- [x] Step 3 — Authentication: `models/User.ts` (bcryptjs hash, `select: false` password, `tokenVersion` for future mass-invalidation), `validators/auth.validators.ts` (zod), `services/auth.service.ts`, `controllers/auth.controller.ts`, `routes/auth.routes.ts`, `utils/cookies.ts` (sets/clears the three auth cookies), `middleware/requireAuth.ts`, `middleware/csrf.ts` (double-submit, reusable for future mutating routes)
+- [x] `errorHandler` now formats `ZodError`s as `400` with per-field issues
+- [x] All five endpoints verified live: register (incl. 409 duplicate, 400 validation), login (incl. 401 wrong password), `/me` (incl. 401 unauthenticated), refresh (incl. 403 missing CSRF, cookie rotation), logout (incl. 403 missing CSRF) — documented in `docs/api/auth.md`
 
 ## Next Steps
 
-1. **Step 3 — Authentication**: register/login/logout/refresh/me via JWT httpOnly cookies, using the `utils/jwt.ts` already in place.
+1. **Step 4 — Workspace & Project CRUD**: User/Workspace/Project/Task models + membership-scoped REST APIs, reusing `requireAuth` and `requireCsrf`.
