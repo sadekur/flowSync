@@ -30,9 +30,9 @@ userSchema.methods.comparePassword = function comparePassword(candidate: string)
 };
 
 userSchema.set("toJSON", {
-  transform: (_doc, ret) => {
-    delete ret.passwordHash;
-    delete ret.__v;
+  transform: (_doc, ret: Record<string, unknown>) => {
+    ret.passwordHash = undefined;
+    ret.__v = undefined;
     return ret;
   },
 });
