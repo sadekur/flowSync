@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env";
 import { healthRouter } from "./routes/health.routes";
 import { authRouter } from "./routes/auth.routes";
+import { workspaceRouter } from "./routes/workspace.routes";
+import { projectRouter } from "./routes/project.routes";
+import { taskRouter } from "./routes/task.routes";
 import { notFound } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 
