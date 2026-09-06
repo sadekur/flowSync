@@ -1,6 +1,7 @@
 import { Project, type ProjectDocument } from "../models/Project";
 import { Task } from "../models/Task";
 import type { WorkspaceDocument } from "../models/Workspace";
+import { generateUniqueSlug } from "../utils/slug";
 import type { CreateProjectInput, UpdateProjectInput } from "../validators/project.validators";
 
 export async function createProject(
@@ -8,8 +9,14 @@ export async function createProject(
   createdBy: string,
   input: CreateProjectInput,
 ): Promise<ProjectDocument> {
+  const slug = await generateUniqueSlug(input.name, async (candidate) => {
+    const existing = await Project.exists({ workspace: workspace._id, slug: candidate });
+    return existing !== null;
+  });
+
   return Project.create({
     workspace: workspace._id,
+    slug,
     name: input.name,
     description: input.description,
     createdBy,
