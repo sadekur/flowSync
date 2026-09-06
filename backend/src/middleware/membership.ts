@@ -54,13 +54,13 @@ export function requireWorkspaceOwner(req: Request, _res: Response, next: NextFu
 }
 
 export async function loadProject(req: Request, _res: Response, next: NextFunction): Promise<void> {
-  const { projectId } = req.params;
-  if (!isValidObjectId(projectId)) {
+  const filter = idOrSlugFilter(req.params.projectId);
+  if (!filter) {
     next(new ApiError(404, "Project not found"));
     return;
   }
 
-  const project = await Project.findOne({ _id: projectId, workspace: req.workspace!._id });
+  const project = await Project.findOne({ ...filter, workspace: req.workspace!._id });
   if (!project) {
     next(new ApiError(404, "Project not found"));
     return;
