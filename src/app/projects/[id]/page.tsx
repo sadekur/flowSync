@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { StoreHydrator } from "@/store/StoreHydrator";
 import { CreateTaskForm } from "@/components/tasks/CreateTaskForm";
 import { TaskStatusSelect } from "@/components/tasks/TaskStatusSelect";
+import { ProjectLiveStatus } from "@/components/projects/ProjectLiveStatus";
 import type { Project, Task, User, Workspace } from "@/types/api";
 
 export default async function ProjectPage({ params, searchParams }: PageProps<"/projects/[id]">) {
