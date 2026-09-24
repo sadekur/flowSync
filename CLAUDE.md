@@ -64,7 +64,7 @@ Browser → Next.js (Server + Client Components) → Express API + Socket.IO →
 
 - **MongoDB** — permanent data (users, workspaces, projects, tasks, messages, notifications) via Mongoose.
 - **Redis** (`ioredis`, `lazyConnect: true`) — presence, cache-aside for hot reads, rate-limiting, and eventually the Socket.IO adapter for multi-instance pub/sub. Presence lives *only* in Redis, never Mongo.
-- **Socket.IO** — real-time layer for chat, task updates, typing, presence, notifications; authenticated off the same httpOnly session cookie as the REST API (wired starting Step 6).
+- **Socket.IO** — real-time layer for chat, task updates, typing, presence, notifications; authenticated off the same httpOnly session cookie as the REST API. Server: `backend/src/sockets/` (`index.ts` wiring + exact-Origin check, `auth.ts` handshake auth, `handlers/*` per feature, `types.ts` event types, hand-mirrored in `src/types/socket.ts`). Client: `src/store/socketMiddleware.ts`. Event contract: `docs/api/sockets.md`. Rooms are keyed by ObjectId (`project:{_id}`), never slug.
 - **`http.createServer(app)`** is used in `server.ts` instead of `app.listen()` directly specifically so Socket.IO can attach to the same server later without touching that file.
 
 ### Backend request pipeline
