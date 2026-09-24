@@ -67,6 +67,22 @@ Browser → Next.js (Server + Client Components) → Express API + Socket.IO →
 - **Socket.IO** — real-time layer for chat, task updates, typing, presence, notifications; authenticated off the same httpOnly session cookie as the REST API (wired starting Step 6).
 - **`http.createServer(app)`** is used in `server.ts` instead of `app.listen()` directly specifically so Socket.IO can attach to the same server later without touching that file.
 
+### Backend request pipeline
+
+`app.ts` mounts every router at `/api`. Each route is a chain of reusable middleware ahead of a thin controller → service:
+
+`requireAuth` (verifies access-token cookie, sets `req.userId`) → `requireCsrf` (mutations only) → `asyncHandler(loadWorkspace | loadProject | loadTask)` (attaches the doc to `req`, 404 if missing) → `requireWorkspaceMember` / `requireWorkspaceOwner` → `asyncHandler(controller)` → `services/*`.
+
+- Throw `ApiError(status, message)` (from `middleware/errorHandler.ts`) for expected failures; zod validators' `ZodError`s are turned into `400` with per-field `issues` by the same handler. Wrap every async handler/middleware in `asyncHandler`.
+- Workspace/project URL params accept **either an ObjectId or a slug** — `idOrSlugFilter` in `middleware/membership.ts` resolves both, so routes and controllers don't care which the frontend linked to. Slugs are generated once at creation (`utils/slug.ts`) and never change on rename.
+- `req.workspace` / `req.project` / `req.task` / `req.userId` are typed via `backend/src/types/express.d.ts`.
+
+### Frontend ↔ API
+
+- **Server Components** read via `src/lib/server-fetch.ts` / `src/lib/session.ts`, which forward the incoming request's cookies to the Express API.
+- **Client Components** call `apiFetch` in `src/lib/client-api.ts`: talks to `NEXT_PUBLIC_API_URL` directly with `credentials: "include"` and copies the `csrfToken` cookie into `X-CSRF-Token` on every non-GET — the client side of the double-submit check in `backend/src/middleware/csrf.ts`. After a mutation, pages refresh via `router.refresh()`.
+- Redux store is created per request via `makeStore()` (`src/store/index.ts`), never a module singleton — a singleton would leak one user's state to another in the shared Next.js server process.
+
 ### Security model (enforced incrementally as each piece is built — see `DECISIONS.md` for full rationale)
 
 - Auth: JWT access (~15m) + refresh (~7d) as `httpOnly` + `Secure` + `SameSite=Strict` cookies only — never in a JSON body or `localStorage`. Redux only ever holds the decoded user profile, never a raw token.
