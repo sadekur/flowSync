@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 5 (Frontend shell) complete and verified live in the browser: register/login/dashboard/project pages working end-to-end against the real backend, including route protection, workspace/project/task creation, and task status updates.
+Step 6 (Socket.IO wiring) complete and verified live: authenticated, Origin-checked socket connection on the shared backend server; membership-checked `project:{id}` rooms with automatic re-join after reconnect; "Live" status badge on the project page.
 
 ## Completed
 
