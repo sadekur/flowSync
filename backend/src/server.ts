@@ -11,8 +11,9 @@ async function main(): Promise<void> {
 
   const app = createApp();
   // http.createServer wraps the app (rather than app.listen directly) so
-  // Socket.IO can attach to the same server later without refactoring this.
+  // Socket.IO shares the same server/port as the REST API.
   const httpServer = http.createServer(app);
+  const io = createSocketServer(httpServer);
 
   httpServer.listen(env.PORT, () => {
     logger.info(`Backend listening on port ${env.PORT}`);
