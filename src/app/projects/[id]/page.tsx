@@ -43,7 +43,11 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
       <AppHeader user={user} />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
         <div>
-          <h1 className="text-xl font-semibold">{project.name}</h1>
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-xl font-semibold">{project.name}</h1>
+            {/* Canonical _id, not the URL slug — the socket room is keyed by id. */}
+            <ProjectLiveStatus projectId={project._id} />
+          </div>
           {project.description && (
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{project.description}</p>
           )}
