@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/client-api";
 import { useAppDispatch } from "@/store/hooks";
 import { setUser } from "@/store/authSlice";
+import { socketDisconnect } from "@/store/socketSlice";
 
 export function LogoutButton() {
   const router = useRouter();
