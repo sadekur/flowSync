@@ -46,7 +46,7 @@ Run from the repo root.
 | `npm run dev:frontend` | Next.js dev server |
 | `npm run dev:backend` | Express + Socket.IO dev server (`tsx watch backend/src/server.ts`) |
 | `npm run build:frontend` | Production Next.js build |
-| `npm run build:backend` | Compiles `backend/src/**/*.ts` → `backend/dist` (fails gracefully if no source yet) |
+| `npm run build:backend` | Compiles `backend/src/**/*.ts` → `backend/dist` (gitignored) |
 | `npm run start:frontend` | Start built Next.js app |
 | `npm run start:backend` | Run compiled backend (`node backend/dist/server.js`) |
 | `npm run lint:frontend` | ESLint on `src/` only (backend is excluded — different runtime, see `eslint.config.mjs`) |
