@@ -1,5 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
+import socketReducer from "./socketSlice";
+import { createSocketMiddleware } from "./socketMiddleware";
 
 // A factory, not a module-level singleton: Next.js Server Components share
 // one Node process across users/requests, so a shared store instance would
@@ -8,7 +10,9 @@ export function makeStore() {
   return configureStore({
     reducer: {
       auth: authReducer,
+      socket: socketReducer,
     },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(createSocketMiddleware()),
   });
 }
 
