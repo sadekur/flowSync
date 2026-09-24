@@ -21,7 +21,9 @@ async function main(): Promise<void> {
 
   const shutdown = async (signal: string): Promise<void> => {
     logger.info(`Received ${signal}, shutting down`);
-    httpServer.close();
+    // io.close() also closes httpServer and disconnects every open socket,
+    // which httpServer.close() alone would wait on forever.
+    await io.close();
     await disconnectDB();
     disconnectRedis();
     process.exit(0);
