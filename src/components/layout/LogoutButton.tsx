@@ -19,6 +19,7 @@ export function LogoutButton() {
       // Cookies only truly matter server-side; fall through to reset local
       // state regardless of a network hiccup on the logout call itself.
     } finally {
+      dispatch(socketDisconnect());
       dispatch(setUser(null));
       router.push("/login");
       router.refresh();
