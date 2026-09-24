@@ -35,7 +35,7 @@ flowSync/
 └── docs/api/                    # one .md per REST endpoint
 ```
 
-`backend/` has **no `tsconfig.json`, no `package.json`**. `npm run build:backend` / `typecheck:backend` invoke `tsc` directly with compiler options as CLI flags, against a file list from `find backend/src -name '*.ts'` (see `package.json` scripts) — `find` is used instead of a shell glob because the POSIX `sh` npm scripts run under doesn't support `**`. Both scripts print a placeholder instead of erroring while `backend/src/` has no `.ts` files yet.
+`backend/` has **no `tsconfig.json`, no `package.json`**. `npm run build:backend` / `typecheck:backend` invoke `tsc` directly with compiler options as CLI flags, against a file list from `find backend/src -name '*.ts'` (see `package.json` scripts) — `find` is used instead of a shell glob because the POSIX `sh` npm scripts run under doesn't support `**`.
 
 ## Commands
 
