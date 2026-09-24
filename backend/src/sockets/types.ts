@@ -10,10 +10,10 @@ export interface ClientToServerEvents {
   "project:leave": (payload: { projectId: string }, ack: Ack) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- server-pushed events arrive from Step 7 onward
+// Server-pushed events arrive from Step 7 onward.
 export interface ServerToClientEvents {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- only needed once the Redis adapter lands (Step 11)
+// Only needed once the Redis adapter lands (Step 11).
 export interface InterServerEvents {}
 
 export interface SocketData {
