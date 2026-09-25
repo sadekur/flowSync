@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import socketReducer from "./socketSlice";
+import messagesReducer from "./messagesSlice";
 import { createSocketMiddleware } from "./socketMiddleware";
 
 // A factory, not a module-level singleton: Next.js Server Components share
