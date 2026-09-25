@@ -113,6 +113,8 @@ export function createSocketMiddleware(): Middleware<SocketDispatchExt> {
       } else if (leaveProject.match(action)) {
         if (activeProjectId === action.payload) activeProjectId = null;
         if (socket?.connected) socket.emit("project:leave", { projectId: action.payload }, () => {});
+      } else if (sendMessage.match(action)) {
+        return emitSend(action.payload);
       }
 
       return result;
