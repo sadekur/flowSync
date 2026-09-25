@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 6 (Socket.IO wiring) complete and verified live: authenticated, Origin-checked socket connection on the shared backend server; membership-checked `project:{id}` rooms with automatic re-join after reconnect; "Live" status badge on the project page.
+Step 7 (real-time chat) complete; backend verified live, browser UI pending a manual check by the user. Per-project chat: saved to MongoDB, sent via `message:send`, broadcast as `message:new` to the project room, history paged over REST, catch-up after reconnect.
 
 ## Completed
 
