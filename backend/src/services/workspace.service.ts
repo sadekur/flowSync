@@ -1,6 +1,7 @@
 import { Workspace, type WorkspaceDocument } from "../models/Workspace";
 import { Project } from "../models/Project";
 import { Task } from "../models/Task";
+import { Message } from "../models/Message";
 import { User } from "../models/User";
 import { ApiError } from "../middleware/errorHandler";
 import { generateUniqueSlug } from "../utils/slug";
