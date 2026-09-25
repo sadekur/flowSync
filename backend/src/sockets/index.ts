@@ -17,6 +17,9 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     allowRequest: (req, callback) => {
       callback(null, req.headers.origin === env.CORS_ORIGIN);
     },
+    // Largest legit packet is one chat message (≤2000 chars, ≤8KB as UTF-8);
+    // the 1MB default would let a client make the server buffer far more.
+    maxHttpBufferSize: 64 * 1024,
   });
 
   // Populates socket.request.cookies for socketAuth — same parser as the REST app.
