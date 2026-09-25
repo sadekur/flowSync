@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { logger } from "../utils/logger";
 import { socketAuth } from "./auth";
 import { registerProjectHandlers } from "./handlers/project.handlers";
+import { registerMessageHandlers } from "./handlers/message.handlers";
 import type { IoServer } from "./types";
 
 export function createSocketServer(httpServer: http.Server): IoServer {
