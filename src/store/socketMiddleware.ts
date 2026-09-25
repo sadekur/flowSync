@@ -12,10 +12,20 @@ import {
   socketConnect,
   socketDisconnect,
 } from "./socketSlice";
+import { messagesReceived, sendMessage } from "./messagesSlice";
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL as string;
+const SEND_TIMEOUT_MS = 10_000;
 
 type FlowSyncSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+
+export type SendMessageResult = { ok: true } | { ok: false; error: string };
+
+// Typed dispatch extension: `dispatch(sendMessage(...))` returns the ack
+// result instead of the action. configureStore folds this into AppDispatch.
+export interface SocketDispatchExt {
+  (action: ReturnType<typeof sendMessage>): Promise<SendMessageResult>;
+}
 
 /**
  * The only code that touches the Socket.IO client. A factory (one socket per
