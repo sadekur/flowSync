@@ -70,8 +70,32 @@ export function createSocketMiddleware(): Middleware<SocketDispatchExt> {
       socket.on("connect_error", (err) => {
         store.dispatch(connectFailed({ message: err.message, willRetry: socket?.active ?? false }));
       });
+      socket.on("message:new", (message) => {
+        store.dispatch(messagesReceived({ projectId: message.project, messages: [message] }));
+      });
 
       return socket;
+    }
+
+    function emitSend(payload: { projectId: string; text: string }): Promise<SendMessageResult> {
+      return new Promise((resolve) => {
+        if (!socket?.connected) {
+          resolve({ ok: false, error: "Not connected — try again in a moment" });
+          return;
+        }
+        socket.timeout(SEND_TIMEOUT_MS).emit("message:send", payload, (err, res) => {
+          if (err) {
+            resolve({ ok: false, error: "The server didn't respond — try again" });
+          } else if (res.ok) {
+            // Show it straight away; the matching message:new broadcast is
+            // deduped by _id.
+            store.dispatch(messagesReceived({ projectId: res.message.project, messages: [res.message] }));
+            resolve({ ok: true });
+          } else {
+            resolve({ ok: false, error: res.error });
+          }
+        });
+      });
     }
 
     return (next) => (action) => {
