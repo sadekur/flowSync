@@ -33,6 +33,9 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
   const { project } = (await projectRes.json()) as { project: Project };
   const { tasks } = tasksRes.ok ? ((await tasksRes.json()) as { tasks: Task[] }) : { tasks: [] };
   const { workspace } = (await workspaceRes.json()) as { workspace: Workspace };
+  const messagePage: MessagePage = messagesRes.ok
+    ? ((await messagesRes.json()) as MessagePage)
+    : { messages: [], hasMore: false };
 
   // GET /api/workspaces/:id returns members populated with name/email
   // (see workspace.controller.ts) — filter out the theoretical string case
