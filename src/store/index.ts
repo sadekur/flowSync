@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import socketReducer from "./socketSlice";
+import messagesReducer from "./messagesSlice";
 import { createSocketMiddleware } from "./socketMiddleware";
 
 // A factory, not a module-level singleton: Next.js Server Components share
@@ -11,8 +12,12 @@ export function makeStore() {
     reducer: {
       auth: authReducer,
       socket: socketReducer,
+      messages: messagesReducer,
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(createSocketMiddleware()),
+    // prepend, not concat: the socket middleware extends dispatch's return type
+    // (SocketDispatchExt), and only the first overload in the chain wins in
+    // the inferred AppDispatch. Runtime order doesn't matter to it.
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(createSocketMiddleware()),
   });
 }
 

@@ -6,7 +6,8 @@ import { StoreHydrator } from "@/store/StoreHydrator";
 import { CreateTaskForm } from "@/components/tasks/CreateTaskForm";
 import { TaskStatusSelect } from "@/components/tasks/TaskStatusSelect";
 import { ProjectLiveStatus } from "@/components/projects/ProjectLiveStatus";
-import type { Project, Task, User, Workspace } from "@/types/api";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+import type { MessagePage, Project, Task, User, Workspace } from "@/types/api";
 
 export default async function ProjectPage({ params, searchParams }: PageProps<"/projects/[id]">) {
   const user = await getCurrentUser();
@@ -19,10 +20,11 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
     notFound();
   }
 
-  const [projectRes, tasksRes, workspaceRes] = await Promise.all([
+  const [projectRes, tasksRes, workspaceRes, messagesRes] = await Promise.all([
     serverFetch(`/api/workspaces/${workspaceId}/projects/${projectId}`),
     serverFetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     serverFetch(`/api/workspaces/${workspaceId}`),
+    serverFetch(`/api/workspaces/${workspaceId}/projects/${projectId}/messages`),
   ]);
 
   if (!projectRes.ok || !workspaceRes.ok) {
@@ -32,6 +34,9 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
   const { project } = (await projectRes.json()) as { project: Project };
   const { tasks } = tasksRes.ok ? ((await tasksRes.json()) as { tasks: Task[] }) : { tasks: [] };
   const { workspace } = (await workspaceRes.json()) as { workspace: Workspace };
+  const messagePage: MessagePage = messagesRes.ok
+    ? ((await messagesRes.json()) as MessagePage)
+    : { messages: [], hasMore: false };
 
   // GET /api/workspaces/:id returns members populated with name/email
   // (see workspace.controller.ts) — filter out the theoretical string case
@@ -78,6 +83,14 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
           ))}
           {tasks.length === 0 && <li className="text-sm text-zinc-500">No tasks yet.</li>}
         </ul>
+
+        <ChatPanel
+          workspaceId={workspaceId}
+          projectId={project._id}
+          currentUserId={user._id}
+          initialMessages={messagePage.messages}
+          initialHasOlder={messagePage.hasMore}
+        />
       </main>
     </div>
   );

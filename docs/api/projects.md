@@ -22,4 +22,4 @@ Body: `{ "name"?: string, "description"?: string }` (any member, not just the cr
 
 ## `DELETE /api/workspaces/:workspaceId/projects/:projectId`
 
-Cascades: deletes every task under the project first. **204**.
+Cascades: deletes every task and chat message under the project first. **204**.

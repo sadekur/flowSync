@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 6 (Socket.IO wiring) complete and verified live: authenticated, Origin-checked socket connection on the shared backend server; membership-checked `project:{id}` rooms with automatic re-join after reconnect; "Live" status badge on the project page.
+Step 7 (real-time chat) complete; backend verified live, browser UI pending a manual check by the user. Per-project chat: saved to MongoDB, sent via `message:send`, broadcast as `message:new` to the project room, history paged over REST, catch-up after reconnect.
 
 ## Completed
 
@@ -29,6 +29,36 @@ Step 6 (Socket.IO wiring) complete and verified live: authenticated, Origin-chec
 - [x] Verified live via a scripted `socket.io-client` run against the real backend (12/12): rejected without cookie / with bad token / with foreign or missing Origin on both polling and websocket; member join/leave ok; slug, nonexistent project and non-member all rejected; join succeeds after being added as a member. Throwaway users/workspace cleaned from Atlas (by exact id + `s6test-` prefix)
 - [x] Verified live in the browser: "Live" badge on a project page; forced a backend restart (`tsx watch`) → badge went "Reconnecting…" then back to "Live" with the room re-joined automatically; confirmed `accessToken` is not readable from page JS. Left the user's own "Step 6 Socket Test" / "Live Demo" workspace+project in place
 
+- [x] Local Redis on Windows is **Memurai Developer 4.1.2** (Redis-compatible, Windows service `Memurai`, auto-start, port 6379), installed 2026-09-25. No `.env` change was needed. CLI: `"C:\Program Files\Memurai\memurai-cli.exe"`
+- [x] Step 7: Real-time chat
+  - Backend:
+    - `models/Message.ts` (`{ project, _id }` index)
+    - `validators/message.validators.ts`
+    - `services/message.service.ts` (explicit `MessageDto`, `before`/`after` cursor paging)
+    - `GET …/projects/:projectId/messages` (`routes/message.routes.ts`, `controllers/message.controller.ts`)
+    - `sockets/handlers/message.handlers.ts` (`message:send`: zod validation, Redis rate limit via `utils/rateLimit.ts`, per-send membership re-check via the new shared `sockets/membership.ts`, broadcast `message:new` + ack with the saved message)
+    - `maxHttpBufferSize` set to 64 KB
+    - project/workspace deletes now cascade to messages
+  - Frontend:
+    - `store/messagesSlice.ts` (`createEntityAdapter`, one project at a time)
+    - `socketMiddleware` handles `message:new` and `sendMessage`, with a typed `SocketDispatchExt` so `await dispatch(sendMessage())` returns the ack
+    - `components/chat/ChatPanel.tsx` (server-fetched first page, "Load older", catch-up on every room (re)join, stick-to-bottom scrolling)
+    - memoized `MessageBubble.tsx`
+    - hooks moved to `.withTypes<>()`
+  - Documented in `docs/api/messages.md` and `docs/api/sockets.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + Memurai), 30/30:
+  - member send acked; broadcast reached the other member and the sender; an outsider not in the room received nothing
+  - `<script>` text stored verbatim
+  - rejected: empty text, 2001 chars (2000 accepted), invalid id, slug
+  - non-member: send gets "Project not found"; history GET gets 403; unauthenticated GET gets 401
+  - rate limit hit after 20 in the window, and it's per user
+  - `before`/`after`/`limit` paging correct; `before`+`after` and `limit=51` get 400
+  - a member removed from the workspace can't send while still in the room
+  - workspace delete cascades to messages
+  - throwaway `s7test-*` users and their workspace deleted from Atlas afterwards
+- [ ] Browser check of the chat UI. Not done by Claude: browser automation isn't allowed to register or log in accounts. Waiting on a manual two-window check by the user.
+
 ## Next Steps
 
-1. **Step 7 — Real-time chat**: `message:send` / `message:new`, persisted + broadcast to the `project:{id}` room.
+1. Manual browser check of Step 7 chat (two users in two browser profiles or one incognito window).
+2. **Step 8: Typing & presence**: `typing:start/stop`, `user:online/offline` backed by Redis.

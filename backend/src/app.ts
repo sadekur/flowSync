@@ -8,6 +8,7 @@ import { authRouter } from "./routes/auth.routes";
 import { workspaceRouter } from "./routes/workspace.routes";
 import { projectRouter } from "./routes/project.routes";
 import { taskRouter } from "./routes/task.routes";
+import { messageRouter } from "./routes/message.routes";
 import { notFound } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -43,6 +44,7 @@ export function createApp(): Express {
   app.use("/api", workspaceRouter);
   app.use("/api", projectRouter);
   app.use("/api", taskRouter);
+  app.use("/api", messageRouter);
 
   app.use(notFound);
   app.use(errorHandler);

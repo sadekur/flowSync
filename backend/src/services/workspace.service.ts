@@ -1,6 +1,7 @@
 import { Workspace, type WorkspaceDocument } from "../models/Workspace";
 import { Project } from "../models/Project";
 import { Task } from "../models/Task";
+import { Message } from "../models/Message";
 import { User } from "../models/User";
 import { ApiError } from "../middleware/errorHandler";
 import { generateUniqueSlug } from "../utils/slug";
@@ -31,6 +32,7 @@ export async function updateWorkspace(
 export async function deleteWorkspace(workspace: WorkspaceDocument): Promise<void> {
   const projectIds = await Project.find({ workspace: workspace._id }).distinct("_id");
   await Task.deleteMany({ project: { $in: projectIds } });
+  await Message.deleteMany({ workspace: workspace._id });
   await Project.deleteMany({ workspace: workspace._id });
   await workspace.deleteOne();
 }

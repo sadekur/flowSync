@@ -1,5 +1,6 @@
 import { Project, type ProjectDocument } from "../models/Project";
 import { Task } from "../models/Task";
+import { Message } from "../models/Message";
 import type { WorkspaceDocument } from "../models/Workspace";
 import { generateUniqueSlug } from "../utils/slug";
 import type { CreateProjectInput, UpdateProjectInput } from "../validators/project.validators";
@@ -36,5 +37,6 @@ export async function updateProject(project: ProjectDocument, input: UpdateProje
 
 export async function deleteProject(project: ProjectDocument): Promise<void> {
   await Task.deleteMany({ project: project._id });
+  await Message.deleteMany({ project: project._id });
   await project.deleteOne();
 }

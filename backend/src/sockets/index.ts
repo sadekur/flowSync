@@ -5,6 +5,7 @@ import { env } from "../config/env";
 import { logger } from "../utils/logger";
 import { socketAuth } from "./auth";
 import { registerProjectHandlers } from "./handlers/project.handlers";
+import { registerMessageHandlers } from "./handlers/message.handlers";
 import type { IoServer } from "./types";
 
 export function createSocketServer(httpServer: http.Server): IoServer {
@@ -17,6 +18,9 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     allowRequest: (req, callback) => {
       callback(null, req.headers.origin === env.CORS_ORIGIN);
     },
+    // Largest legit packet is one chat message (≤2000 chars, ≤8KB as UTF-8);
+    // the 1MB default would let a client make the server buffer far more.
+    maxHttpBufferSize: 64 * 1024,
   });
 
   // Populates socket.request.cookies for socketAuth — same parser as the REST app.
@@ -27,6 +31,7 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     logger.info(`socket connected: ${socket.id} (user ${socket.data.userId})`);
 
     registerProjectHandlers(socket);
+    registerMessageHandlers(socket);
 
     socket.on("disconnect", (reason) => {
       logger.info(`socket disconnected: ${socket.id} (user ${socket.data.userId}) — ${reason}`);

@@ -28,6 +28,20 @@ export interface Project {
   updatedAt: string;
 }
 
+// Same shape from GET .../messages and the `message:new` socket event.
+export interface Message {
+  _id: string;
+  project: string;
+  sender: { _id: string; name: string } | null;
+  text: string;
+  createdAt: string;
+}
+
+export interface MessagePage {
+  messages: Message[];
+  hasMore: boolean;
+}
+
 export type TaskStatus = "todo" | "in_progress" | "done";
 
 export interface Task {
