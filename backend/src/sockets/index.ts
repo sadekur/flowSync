@@ -30,6 +30,7 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     logger.info(`socket connected: ${socket.id} (user ${socket.data.userId})`);
 
     registerProjectHandlers(socket);
+    registerMessageHandlers(socket);
 
     socket.on("disconnect", (reason) => {
       logger.info(`socket disconnected: ${socket.id} (user ${socket.data.userId}) — ${reason}`);
