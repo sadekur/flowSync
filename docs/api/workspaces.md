@@ -26,7 +26,7 @@ Owner only. Body: `{ "name": string }` → **200** `{ "workspace": {...} }` · *
 
 ## `DELETE /api/workspaces/:workspaceId`
 
-Owner only. Cascades: deletes every project and task inside the workspace first. **204** · **403** not the owner.
+Owner only. Cascades: deletes every project, task and chat message inside the workspace first. **204** · **403** not the owner.
 
 ## `POST /api/workspaces/:workspaceId/members`
 
