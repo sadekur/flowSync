@@ -82,6 +82,14 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
           ))}
           {tasks.length === 0 && <li className="text-sm text-zinc-500">No tasks yet.</li>}
         </ul>
+
+        <ChatPanel
+          workspaceId={workspaceId}
+          projectId={project._id}
+          currentUserId={user._id}
+          initialMessages={messagePage.messages}
+          initialHasOlder={messagePage.hasMore}
+        />
       </main>
     </div>
   );
