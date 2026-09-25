@@ -52,7 +52,7 @@ Run from the repo root.
 | `npm run lint:frontend` | ESLint on `src/` only (backend is excluded — different runtime, see `eslint.config.mjs`) |
 | `npm run typecheck:backend` | Same discovery/flags as `build:backend`, with `--noEmit` |
 
-There is no `lint:backend`, `typecheck:frontend` (use the IDE/`tsc --noEmit` via Next's own tsconfig), or test script yet — tests arrive at Step 12 (`PLANNING.md`). Backend dev requires Redis (`redis-server`) running locally and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable.
+There is no `lint:backend`, `typecheck:frontend` (use the IDE/`tsc --noEmit` via Next's own tsconfig), or test script yet — tests arrive at Step 12 (`PLANNING.md`); `backend/tests/` currently holds only a `.gitkeep`. Backend dev requires Redis (`redis-server`) running locally and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable. Node ≥ 20 is required (`engines` in `package.json`).
 
 **`MONGO_URI` in `.env` points at a remote Atlas cluster, not local `mongod`.** A bare `mongosh` connects to the (empty) local instance — any inspection or cleanup of dev data must use `mongosh "$MONGO_URI"`. The Atlas DB also holds the human user's own workspaces/projects: when live-verifying a step, create throwaway users/data and delete only those afterwards.
 
