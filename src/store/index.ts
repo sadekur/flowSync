@@ -11,6 +11,7 @@ export function makeStore() {
     reducer: {
       auth: authReducer,
       socket: socketReducer,
+      messages: messagesReducer,
     },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(createSocketMiddleware()),
   });
