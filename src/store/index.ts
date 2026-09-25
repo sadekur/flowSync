@@ -14,7 +14,10 @@ export function makeStore() {
       socket: socketReducer,
       messages: messagesReducer,
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(createSocketMiddleware()),
+    // prepend, not concat: the socket middleware extends dispatch's return type
+    // (SocketDispatchExt), and only the first overload in the chain wins in
+    // the inferred AppDispatch. Runtime order doesn't matter to it.
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(createSocketMiddleware()),
   });
 }
 
