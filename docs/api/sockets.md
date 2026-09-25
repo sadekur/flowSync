@@ -1,6 +1,6 @@
 # Socket.IO
 
-**Implemented (Step 6): connection, auth, project rooms.** Server-pushed events are added from Step 7 onward.
+**Implemented:** connection, auth and project rooms (Step 6); chat (Step 7).
 
 Same host/port as the REST API (`NEXT_PUBLIC_SOCKET_URL`, default `http://localhost:4000`), default path `/socket.io/`. Event types: `backend/src/sockets/types.ts`, mirrored by hand in `src/types/socket.ts`.
 
