@@ -19,10 +19,11 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
     notFound();
   }
 
-  const [projectRes, tasksRes, workspaceRes] = await Promise.all([
+  const [projectRes, tasksRes, workspaceRes, messagesRes] = await Promise.all([
     serverFetch(`/api/workspaces/${workspaceId}/projects/${projectId}`),
     serverFetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`),
     serverFetch(`/api/workspaces/${workspaceId}`),
+    serverFetch(`/api/workspaces/${workspaceId}/projects/${projectId}/messages`),
   ]);
 
   if (!projectRes.ok || !workspaceRes.ok) {
