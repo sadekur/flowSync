@@ -1,20 +1,14 @@
 import mongoose from "mongoose";
 import { z } from "zod";
-import { Project } from "../../models/Project";
-import { Workspace } from "../../models/Workspace";
 import { logger } from "../../utils/logger";
-import { projectRoom, type Ack, type IoSocket } from "../types";
+import { findProjectForMember } from "../membership";
+import { projectRoom, safeAck, type IoSocket } from "../types";
 
 // Canonical ObjectIds only (no slugs) — one project must map to exactly one
 // room name no matter how the page was linked.
 const projectPayload = z.object({
   projectId: z.string().refine((id) => mongoose.Types.ObjectId.isValid(id), "Invalid projectId"),
 });
-
-// A client can emit without an ack callback; never let that throw.
-function safeAck(ack: unknown): Ack {
-  return typeof ack === "function" ? (ack as Ack) : () => {};
-}
 
 export function registerProjectHandlers(socket: IoSocket): void {
   const { userId } = socket.data;
@@ -29,14 +23,9 @@ export function registerProjectHandlers(socket: IoSocket): void {
     const { projectId } = parsed.data;
 
     try {
-      const project = await Project.findById(projectId).select("workspace");
       // Same membership rule as requireWorkspaceMember — and the same 404-style
       // answer for "doesn't exist" and "not yours", so ids can't be probed.
-      const isMember =
-        project &&
-        (await Workspace.exists({ _id: project.workspace, members: userId }));
-
-      if (!isMember) {
+      if (!(await findProjectForMember(projectId, userId))) {
         ack({ ok: false, error: "Project not found" });
         return;
       }
