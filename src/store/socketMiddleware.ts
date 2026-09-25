@@ -33,7 +33,7 @@ export interface SocketDispatchExt {
  * response to socketConnect, which is only dispatched from client effects, so
  * nothing here runs during server rendering.
  */
-export function createSocketMiddleware(): Middleware {
+export function createSocketMiddleware(): Middleware<SocketDispatchExt> {
   let socket: FlowSyncSocket | null = null;
   // The room the UI wants to be in, independent of connection state — so it
   // can be re-joined automatically after every reconnect.
