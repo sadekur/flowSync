@@ -44,6 +44,7 @@ export function createApp(): Express {
   app.use("/api", workspaceRouter);
   app.use("/api", projectRouter);
   app.use("/api", taskRouter);
+  app.use("/api", messageRouter);
 
   app.use(notFound);
   app.use(errorHandler);
