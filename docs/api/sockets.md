@@ -21,9 +21,11 @@ The handshake is accepted only when **both**:
 
 Auth is checked once per handshake, including every automatic reconnect. It is not re-checked per event.
 
+Packets larger than **64 KB** (`maxHttpBufferSize`) are rejected, which closes the connection.
+
 ## Client → server events
 
-Both events take an **ack callback** with `{ ok: true }` or `{ ok: false, error: string }`.
+Every event takes an **ack callback** with `{ ok: true, ...data }` or `{ ok: false, error: string }`.
 
 ### `project:join`
 
