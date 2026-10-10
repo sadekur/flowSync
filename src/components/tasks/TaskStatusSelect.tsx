@@ -66,8 +66,8 @@ export function TaskStatusSelect({
         disabled={pending}
         className="rounded-md border border-black/15 px-2 py-1 text-sm dark:border-white/15 dark:bg-transparent"
       >
-        {Object.entries(STATUS_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>
+        {Object.entries(STATUS_LABELS).map(([optionValue, label]) => (
+          <option key={optionValue} value={optionValue}>
             {label}
           </option>
         ))}
