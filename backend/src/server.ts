@@ -16,6 +16,8 @@ async function main(): Promise<void> {
   // Socket.IO shares the same server/port as the REST API.
   const httpServer = http.createServer(app);
   const io = createSocketServer(httpServer);
+  // Publishes `io` to the REST layer (task controllers broadcast through it).
+  setIo(io);
 
   httpServer.listen(env.PORT, () => {
     logger.info(`Backend listening on port ${env.PORT}`);
