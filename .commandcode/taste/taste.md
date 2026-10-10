@@ -1,1 +1,2 @@
 - Verifies API documentation is in sync with the actual backend implementation before starting a new feature step (e.g., cross-checked all of docs/api against routes, controllers, validators, services, middleware, and socket handlers before beginning "Step 9"). Confidence: 0.7
+- Works in incremental, documented steps (a PLANNING/PROGRESS-style doc) and kicks off each next step with a terse command (e.g., just "start"), expecting the agent to figure out the plan's next step rather than being handed detailed instructions. Confidence: 0.55
