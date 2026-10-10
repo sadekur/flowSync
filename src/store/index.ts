@@ -16,6 +16,7 @@ export function makeStore() {
       socket: socketReducer,
       messages: messagesReducer,
       presence: presenceReducer,
+      tasks: tasksReducer,
     },
     // prepend, not concat: the socket middleware extends dispatch's return type
     // (SocketDispatchExt), and only the first overload in the chain wins in
