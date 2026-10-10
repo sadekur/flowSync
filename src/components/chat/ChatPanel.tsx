@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/client-api";
 import { useAppDispatch, useAppSelector, useAppStore } from "@/store/hooks";
 import {
@@ -10,8 +10,9 @@ import {
   selectAllMessages,
   sendMessage,
 } from "@/store/messagesSlice";
+import { typingStart, typingStop } from "@/store/presenceSlice";
 import { MessageBubble } from "./MessageBubble";
-import type { Message, MessagePage } from "@/types/api";
+import type { Message, MessagePage, User } from "@/types/api";
 
 const MAX_LENGTH = 2000;
 // Caps the reconnect catch-up at 5 × 50 messages; anything beyond that is
@@ -22,6 +23,7 @@ export function ChatPanel({
   workspaceId,
   projectId,
   currentUserId,
+  members,
   initialMessages,
   initialHasOlder,
 }: {
@@ -29,6 +31,7 @@ export function ChatPanel({
   // Canonical ObjectId — must match `message.project` on incoming events.
   projectId: string;
   currentUserId: string;
+  members: User[];
   initialMessages: Message[];
   initialHasOlder: boolean;
 }) {
@@ -46,6 +49,28 @@ export function ChatPanel({
 
   const connected = useAppSelector((s) => s.socket.status === "connected");
   const inRoom = useAppSelector((s) => s.socket.joinedProjectId === projectId);
+
+  // Who is typing, resolved to display names. The slice carries raw user ids
+  // (the wire format); the page already fetched member names for the task
+  // assignee dropdown, so no extra request is needed.
+  const typingUserIds = useAppSelector((s) => s.presence.typingUserIds);
+  const membersById = useMemo(() => new Map(members.map((member) => [member._id, member])), [members]);
+  const typingNames = useMemo(
+    () =>
+      typingUserIds
+        .filter((id) => id !== currentUserId)
+        .map((id) => membersById.get(id)?.name)
+        .filter((name): name is string => Boolean(name)),
+    [typingUserIds, currentUserId, membersById],
+  );
+  const typingLabel =
+    typingNames.length === 0
+      ? ""
+      : typingNames.length === 1
+        ? `${typingNames[0]} is typing…`
+        : typingNames.length <= 3
+          ? `${typingNames.join(", ")} are typing…`
+          : "Several people are typing…";
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -90,6 +115,14 @@ export function ChatPanel({
       cancelled = true;
     };
   }, [inRoom, projectId, basePath, dispatch, store]);
+
+  // If the page unmounts mid-typing (navigation), tell peers to clear the
+  // indicator right away instead of waiting out their expiry timer.
+  useEffect(() => {
+    return () => {
+      dispatch(typingStop({ projectId }));
+    };
+  }, [dispatch, projectId]);
 
   // Stick to the bottom when a new message arrives, unless the user has
   // scrolled up to read history. Always follow your own messages.
@@ -136,10 +169,18 @@ export function ChatPanel({
 
     if (result.ok) {
       setText("");
+      dispatch(typingStop({ projectId }));
     } else {
       // Keep the draft so nothing typed is lost.
       setSendError(result.error);
     }
+  }
+
+  function handleChange(nextText: string): void {
+    setText(nextText);
+    // The middleware throttles these into at most one emit per ~2.5 s and
+    // sends a `typing:stop` after the keystrokes stop.
+    dispatch(nextText.trim() ? typingStart({ projectId }) : typingStop({ projectId }));
   }
 
   return (
@@ -171,10 +212,15 @@ export function ChatPanel({
         {messages.length === 0 && <p className="text-sm text-zinc-500">No messages yet. Say hello!</p>}
       </div>
 
+      {/* Fixed-height line so the typing indicator never shifts the layout. */}
+      <p aria-live="polite" className="min-h-4 text-xs italic text-zinc-500 dark:text-zinc-400">
+        {typingLabel}
+      </p>
+
       <form onSubmit={handleSubmit} className="flex flex-wrap items-start gap-2">
         <input
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           placeholder={connected ? "Write a message…" : "Connecting…"}
           maxLength={MAX_LENGTH}
           aria-label="Message"
