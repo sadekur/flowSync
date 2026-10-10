@@ -6,6 +6,7 @@ import { StoreHydrator } from "@/store/StoreHydrator";
 import { CreateTaskForm } from "@/components/tasks/CreateTaskForm";
 import { TaskStatusSelect } from "@/components/tasks/TaskStatusSelect";
 import { ProjectLiveStatus } from "@/components/projects/ProjectLiveStatus";
+import { PresenceList } from "@/components/projects/PresenceList";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import type { MessagePage, Project, Task, User, Workspace } from "@/types/api";
 
@@ -59,6 +60,8 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
           )}
         </div>
 
+        <PresenceList projectId={project._id} members={members} currentUserId={user._id} />
+
         <CreateTaskForm workspaceId={workspaceId} projectId={projectId} members={members} />
 
         <ul className="flex flex-col gap-3">
@@ -88,6 +91,7 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
           workspaceId={workspaceId}
           projectId={project._id}
           currentUserId={user._id}
+          members={members}
           initialMessages={messagePage.messages}
           initialHasOlder={messagePage.hasMore}
         />
