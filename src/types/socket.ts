@@ -15,6 +15,9 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
   "message:new": (message: Message) => void;
+  "task:created": (task: Task) => void;
+  "task:updated": (task: Task) => void;
+  "task:deleted": (payload: { projectId: string; taskId: string }) => void;
   "user:online": (payload: { projectId: string; userId: string }) => void;
   "user:offline": (payload: { projectId: string; userId: string }) => void;
   "typing:start": (payload: { projectId: string; userId: string }) => void;
