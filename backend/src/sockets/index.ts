@@ -36,13 +36,17 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     registerMessageHandlers(socket);
     registerTypingHandlers(socket);
 
-    socket.on("disconnect", (reason) => {
-      // Presence is per project room; a disconnect implicitly leaves every
-      // room, so decrement each and broadcast `user:offline` where the
-      // user's last socket left. Best effort — a missed one expires (TTL).
+    // Presence cleanup must run on "disconnecting", not "disconnect":
+    // socket.io leaves every room (join([])) before emitting "disconnect",
+    // so by then socket.rooms no longer lists the project rooms. Best
+    // effort — a missed decrement expires with the presence TTL.
+    socket.on("disconnecting", (reason) => {
       removePresenceFromAllRooms(socket).catch((err) =>
         logger.error(`presence cleanup failed on disconnect (user ${socket.data.userId})`, err),
       );
+    });
+
+    socket.on("disconnect", (reason) => {
       logger.info(`socket disconnected: ${socket.id} (user ${socket.data.userId}) — ${reason}`);
     });
   });
