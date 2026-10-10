@@ -1,5 +1,5 @@
 import { createAction, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { leaveProject, socketDisconnect } from "./socketSlice";
+import { leaveProject, roomJoined, socketDisconnect } from "./socketSlice";
 
 // Commands handled by socketMiddleware — components dispatch these instead
 // of touching the Socket.IO client themselves. Fire-and-forget: the
@@ -25,18 +25,6 @@ const presenceSlice = createSlice({
   name: "presence",
   initialState,
   reducers: {
-    // The join-ack snapshot: the authoritative online list for the project
-    // replaces whatever accumulated while the room wasn't confirmed yet.
-    presenceHydrated(state, action: PayloadAction<{ projectId: string; onlineUserIds: string[] }>) {
-      const { projectId, onlineUserIds } = action.payload;
-      if (state.projectId !== projectId) {
-        state.projectId = projectId;
-        state.onlineUserIds = onlineUserIds;
-        state.typingUserIds = [];
-        return;
-      }
-      state.onlineUserIds = onlineUserIds;
-    },
     // Reducers are idempotent on purpose: the server can legally deliver the
     // same user:online/user:offline twice (multi-tab races), so pushes and
     // filters must not double-count or care about missing entries.
@@ -64,6 +52,19 @@ const presenceSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // The join-ack snapshot (socketMiddleware dispatches roomJoined with the
+      // online list): the authoritative presence state for the project, on
+      // first join and again after every reconnect.
+      .addCase(roomJoined, (state, action) => {
+        const { projectId, onlineUserIds } = action.payload;
+        if (state.projectId !== projectId) {
+          state.projectId = projectId;
+          state.onlineUserIds = onlineUserIds;
+          state.typingUserIds = [];
+          return;
+        }
+        state.onlineUserIds = onlineUserIds;
+      })
       .addCase(socketDisconnect, () => initialState)
       .addCase(leaveProject, (state, action) => {
         if (state.projectId === action.payload) return initialState;
@@ -71,6 +72,6 @@ const presenceSlice = createSlice({
   },
 });
 
-export const { presenceHydrated, userOnline, userOffline, typingStarted, typingStopped } = presenceSlice.actions;
+export const { userOnline, userOffline, typingStarted, typingStopped } = presenceSlice.actions;
 
 export default presenceSlice.reducer;
