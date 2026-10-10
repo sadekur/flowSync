@@ -13,6 +13,7 @@ import {
   socketDisconnect,
 } from "./socketSlice";
 import { messagesReceived, sendMessage } from "./messagesSlice";
+import { taskRemoved, taskUpserted } from "./tasksSlice";
 import {
   typingStart,
   typingStop,
