@@ -37,8 +37,8 @@ const socketSlice = createSlice({
       state.status = action.payload.willRetry ? "reconnecting" : "error";
       state.error = action.payload.message;
     },
-    roomJoined(state, action: PayloadAction<string>) {
-      state.joinedProjectId = action.payload;
+    roomJoined(state, action: PayloadAction<{ projectId: string; onlineUserIds: string[] }>) {
+      state.joinedProjectId = action.payload.projectId;
       state.error = null;
     },
     roomJoinFailed(state, action: PayloadAction<string>) {
