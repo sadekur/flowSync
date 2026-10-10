@@ -103,6 +103,33 @@ Step 10 (real-time notifications) complete and verified live — a scripted wire
   - a foreign-Origin handshake is still rejected
   - throwaway `s9test-*` users and their workspace deleted from Atlas afterwards
 
+- [x] Step 10: Real-time notifications
+  - Backend:
+    - `models/Notification.ts`: `{ recipient, actor, type, workspace, project, task?, message?, preview, read }`, indexed `{ recipient, read, createdAt }`
+    - `services/notification.service.ts`: `NotificationDto`/`toDto` (populates actor name only), `notifyTaskAssigned` / `notifyTaskUpdated` (assignee-only, never the actor), `notifyNewMessage` (workspace members minus sender), `listNotifications` (newest 50 + real `unreadCount`), `markAllRead`
+    - `sockets/types.ts`: `userRoom(userId)` + `notification:new` in `ServerToClientEvents`
+    - `sockets/index.ts`: every connection joins `user:{userId}`; `sockets/emitter.ts`: `emitNotification(recipientId, …)`
+    - `task.controller.ts` notifies after create/update (previous assignee read before the update); `message.handlers.ts` fans out after the ack (best-effort, `.catch(log)` — never fails the send)
+    - `routes/notification.routes.ts` + `controllers/notification.controller.ts`: `GET /api/notifications`, `POST /api/notifications/read` (CSRF); mounted in `app.ts`
+    - cascade: `deleteWorkspace` / `deleteProject` / `deleteTask` also delete notifications
+  - Frontend:
+    - `store/notificationsSlice.ts`: entity adapter (newest-first) + `unreadCount`; `notificationsHydrated` / `notificationReceived` (idempotent count) / `allMarkedRead`; resets on `socketDisconnect`
+    - `socketMiddleware` handles `notification:new`; `src/types/socket.ts` mirrors it
+    - `components/notifications/NotificationBell.tsx` (fetch on mount, badge, dropdown, mark-all-on-open, outside-click/Escape) + memoized `NotificationItem.tsx` (composed text + relative time, links by ids)
+    - `AppHeader` renders the bell on every authenticated page
+  - Documented in `docs/api/notifications.md`, `docs/api/sockets.md`, and `DECISIONS.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + Redis), 21/21:
+  - B (not viewing the project) received `notification:new` for a task assigned to them, a task update, and a new message — each with the full DTO (actor name, preview, project/workspace ids, `read: false`)
+  - the actor (A) received none of their own notifications; a non-member (C) received none
+  - `GET /api/notifications` for B → `unreadCount` 3, newest-first; A → 0
+  - unauthenticated `GET` → 401; `POST …/read` without CSRF → 403; with CSRF → 204 → `unreadCount` 0 and all `read`
+  - workspace delete cascaded the notifications; `s10test-*` users removed from Atlas afterwards
+- [x] Verified in a real browser (agent-browser), logged in as B on the dashboard:
+  - the bell badge hydrated to `1` from `GET /api/notifications` on load
+  - sending a message as A over the socket incremented B's badge to `2` live, with no reload (B was on `/dashboard`, not the project page)
+  - opening the dropdown listed both items ("… sent a message: …" / "… assigned you …") with relative times and correct `/projects/:id?workspace=:id` links, and cleared the badge to 0 (mark-all-read)
+  - throwaway `s10ui-*` users/workspace deleted from Atlas afterwards
+
 ## Next Steps
 
 1. **Step 11: Redis at scale** — formalize caching (cache-aside on hot reads with explicit invalidation) and add the Socket.IO Redis adapter (`@socket.io/redis-adapter`) so rooms/events work across multiple backend instances.
