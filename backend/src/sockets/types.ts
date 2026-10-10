@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import type { MessageDto } from "../services/message.service";
+import type { TaskDocument } from "../models/Task";
 
 // Mirrored by hand in src/types/socket.ts — the frontend can't import from
 // backend/ (separate tsconfig scope), so keep both in sync when adding events.
