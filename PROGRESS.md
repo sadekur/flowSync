@@ -105,4 +105,4 @@ Step 10 (real-time notifications) complete and verified live — a scripted wire
 
 ## Next Steps
 
-1. **Step 10: Notifications** — task-assigned/updated and new-message notifications, stored + pushed live.
+1. **Step 11: Redis at scale** — formalize caching (cache-aside on hot reads with explicit invalidation) and add the Socket.IO Redis adapter (`@socket.io/redis-adapter`) so rooms/events work across multiple backend instances.
