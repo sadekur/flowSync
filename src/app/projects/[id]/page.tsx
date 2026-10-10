@@ -4,7 +4,7 @@ import { serverFetch } from "@/lib/server-fetch";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { StoreHydrator } from "@/store/StoreHydrator";
 import { CreateTaskForm } from "@/components/tasks/CreateTaskForm";
-import { TaskStatusSelect } from "@/components/tasks/TaskStatusSelect";
+import { TaskList } from "@/components/tasks/TaskList";
 import { ProjectLiveStatus } from "@/components/projects/ProjectLiveStatus";
 import { PresenceList } from "@/components/projects/PresenceList";
 import { ChatPanel } from "@/components/chat/ChatPanel";
