@@ -101,6 +101,14 @@ Sent to everyone in `project:{projectId}` after a **successful REST task mutatio
 
 Unlike `message:new`, no socket **handler** produces these — there is no `task:send`. A client must be in `project:{projectId}` to receive them, and always gets the authoritative current list from `GET …/tasks` on every (re)join (see Notes).
 
+### `notification:new`
+
+```ts
+socket.on("notification:new", (notification: Notification) => …)
+```
+
+Sent to the **recipient's own room**, `user:{userId}` — not a project room. Every connection joins its user room automatically at handshake (`backend/src/sockets/index.ts`), so a notification reaches the user regardless of which project (if any) they're viewing, on every tab. Created by `notification.service.ts` at the task REST write points and on `message:send`; the payload is documented in `docs/api/notifications.md`.
+
 ### `user:online` / `user:offline`
 
 ```ts
