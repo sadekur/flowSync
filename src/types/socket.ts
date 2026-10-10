@@ -1,5 +1,5 @@
 // Hand-mirrored from backend/src/sockets/types.ts — keep both in sync.
-import type { Message } from "./api";
+import type { Message, Task } from "./api";
 
 // `T` is extra data carried by a successful ack (e.g. the saved message).
 export type AckResponse<T extends object = object> = ({ ok: true } & T) | { ok: false; error: string };
