@@ -24,10 +24,15 @@ export async function getOne(req: Request, res: Response): Promise<void> {
 export async function update(req: Request, res: Response): Promise<void> {
   const input = updateTaskSchema.parse(req.body);
   const task = await taskService.updateTask(req.workspace!, req.task!, input);
+  emitTaskUpdated(task.project.toString(), task);
   res.status(200).json({ task });
 }
 
 export async function remove(req: Request, res: Response): Promise<void> {
+  // Capture the id/project before the document is deleted.
+  const taskId = req.task!._id.toString();
+  const projectId = req.task!.project.toString();
   await taskService.deleteTask(req.task!);
+  emitTaskDeleted(projectId, taskId);
   res.status(204).send();
 }
