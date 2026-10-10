@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 9 (real-time task updates) complete and verified live — a scripted wire-protocol test (22/22) against the real backend (Atlas + Redis). Task REST mutations broadcast `task:created`/`task:updated`/`task:deleted` to the project room; the task UI updates from the Redux store with no `router.refresh()`.
+Step 10 (real-time notifications) complete and verified live — a scripted wire-protocol test (21/21) plus a browser check against the real backend (Atlas + Redis). Task assignments/updates and new messages create persisted per-user notifications that are pushed over Socket.IO to a `user:{id}` room, with a header bell + unread badge and mark-all-read-on-open.
 
 ## Completed
 
