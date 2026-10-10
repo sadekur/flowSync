@@ -149,6 +149,18 @@ export function createSocketMiddleware(): Middleware<SocketDispatchExt> {
       socket.on("message:new", (message) => {
         store.dispatch(messagesReceived({ projectId: message.project, messages: [message] }));
       });
+      // Task mutations arrive from the REST layer via the room broadcast.
+      // Checked against the open project in the reducer, so events for another
+      // project are ignored.
+      socket.on("task:created", (task) => {
+        store.dispatch(taskUpserted({ projectId: task.project, task }));
+      });
+      socket.on("task:updated", (task) => {
+        store.dispatch(taskUpserted({ projectId: task.project, task }));
+      });
+      socket.on("task:deleted", (payload) => {
+        store.dispatch(taskRemoved(payload));
+      });
       socket.on("user:online", (payload) => {
         store.dispatch(userOnline(payload));
       });
