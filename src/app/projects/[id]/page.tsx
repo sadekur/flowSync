@@ -62,30 +62,11 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
 
         <PresenceList projectId={project._id} members={members} currentUserId={user._id} />
 
-        <CreateTaskForm workspaceId={workspaceId} projectId={projectId} members={members} />
+        {/* Canonical _id, not the URL slug — the store and socket events are
+            keyed by id (see DECISIONS.md), matching ProjectLiveStatus below. */}
+        <CreateTaskForm workspaceId={workspaceId} projectId={project._id} members={members} />
 
-        <ul className="flex flex-col gap-3">
-          {tasks.map((task) => (
-            <li
-              key={task._id}
-              className="flex items-center justify-between gap-4 rounded-lg border border-black/10 px-4 py-3 dark:border-white/10"
-            >
-              <div>
-                <p className="font-medium">{task.title}</p>
-                {task.description && (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">{task.description}</p>
-                )}
-              </div>
-              <TaskStatusSelect
-                workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={task._id}
-                status={task.status}
-              />
-            </li>
-          ))}
-          {tasks.length === 0 && <li className="text-sm text-zinc-500">No tasks yet.</li>}
-        </ul>
+        <TaskList workspaceId={workspaceId} projectId={project._id} initialTasks={tasks} />
 
         <ChatPanel
           workspaceId={workspaceId}
