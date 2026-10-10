@@ -14,6 +14,7 @@ import {
 } from "./socketSlice";
 import { messagesReceived, sendMessage } from "./messagesSlice";
 import { taskRemoved, taskUpserted } from "./tasksSlice";
+import { notificationReceived } from "./notificationsSlice";
 import {
   typingStart,
   typingStop,
@@ -160,6 +161,11 @@ export function createSocketMiddleware(): Middleware<SocketDispatchExt> {
       });
       socket.on("task:deleted", (payload) => {
         store.dispatch(taskRemoved(payload));
+      });
+      // Addressed to this user's own room server-side, so it arrives whether
+      // or not the open project is the one the notification refers to.
+      socket.on("notification:new", (notification) => {
+        store.dispatch(notificationReceived(notification));
       });
       socket.on("user:online", (payload) => {
         store.dispatch(userOnline(payload));
