@@ -83,6 +83,26 @@ Step 9 (real-time task updates) complete and verified live — a scripted wire-p
   - surfaced and fixed a real frontend bug the scripted test couldn't see: `presenceSlice` never consumed the join-ack snapshot — `presenceHydrated` was a dead action, so the online list stayed empty. It now hydrates from the `roomJoined` action's `onlineUserIds` payload (reducer removed)
   - test users/workspace/project/message deleted from Atlas afterwards
 
+- [x] Step 9: Real-time task updates
+  - Backend:
+    - `sockets/emitter.ts`: the one place the REST layer reaches `io` — a nullable reference (`setIo`) plus typed `emitTaskCreated/Updated/Deleted`, so task controllers broadcast to `project:{projectId}` after a successful write (null before startup / after shutdown ⇒ skip, never throw)
+    - `sockets/types.ts`: `ServerToClientEvents` gains `task:created`/`task:updated` (the task, same JSON as the REST response) and `task:deleted` (`{ projectId, taskId }`)
+    - `server.ts`: `setIo(io)` after `createSocketServer`, `setIo(null)` after `io.close()`
+    - `task.controller.ts`: emits after create/update/delete (delete captures ids before the doc is removed)
+  - Frontend:
+    - `store/tasksSlice.ts`: `createEntityAdapter` keyed by `_id`, newest-first; `tasksHydrated` merges (same project) / replaces (project switch), `taskUpserted`/`taskRemoved`, resets on `socketDisconnect`
+    - `socketMiddleware` translates `task:created`/`task:updated`/`task:deleted` into store actions; `src/types/socket.ts` mirrors the new events
+    - `components/tasks/TaskList.tsx` (live list, seeded from the server page, catch-up refetch on every (re)join) + `TaskCard.tsx` (memoized)
+    - `CreateTaskForm` / `TaskStatusSelect` now dispatch the REST response into the store instead of `router.refresh()`; the status select uses a short-lived optimistic value so it doesn't snap back
+    - project page passes canonical `project._id` to the task components (matching the socket room key)
+  - Documented in `docs/api/tasks.md`, `docs/api/sockets.md`, and `DECISIONS.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + Redis), 22/22:
+  - a task created/updated/deleted over REST as member A was broadcast to member B in the room as `task:created`/`task:updated`/`task:deleted`, with `task:created`/`task:updated` carrying the full task in the REST JSON shape (no `__v`) and `task:deleted` carrying `{ projectId, taskId }`
+  - the actor's own socket also received the broadcast (self-broadcast, deduped client-side)
+  - a connected socket that never joined the room received no task events
+  - a foreign-Origin handshake is still rejected
+  - throwaway `s9test-*` users and their workspace deleted from Atlas afterwards
+
 ## Next Steps
 
-1. **Step 9: Real-time task updates** — task mutations broadcast to the project room, UI updates without refresh.
+1. **Step 10: Notifications** — task-assigned/updated and new-message notifications, stored + pushed live.
