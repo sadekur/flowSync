@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 8 (typing & presence) complete and verified live — scripted wire-protocol test (31/31) plus a two-user check in a real browser. Redis-backed presence per project room (`user:online`/`user:offline`, multi-tab aware, join-ack snapshot) plus ephemeral `typing:start`/`typing:stop`, with an "Online now" list and a typing indicator in the chat UI.
+Step 9 (real-time task updates) complete and verified live — a scripted wire-protocol test (22/22) against the real backend (Atlas + Redis). Task REST mutations broadcast `task:created`/`task:updated`/`task:deleted` to the project room; the task UI updates from the Redux store with no `router.refresh()`.
 
 ## Completed
 
