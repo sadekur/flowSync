@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/client-api";
 import { useAppDispatch } from "@/store/hooks";
 import { taskUpserted } from "@/store/tasksSlice";
@@ -26,19 +26,16 @@ export function TaskStatusSelect({
   const dispatch = useAppDispatch();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Local value so the change is visible immediately, before the PATCH and the
-  // task:updated broadcast round-trip; resynced whenever the store delivers a
-  // new status (e.g. another user's change).
-  const [value, setValue] = useState<TaskStatus>(status);
-
-  useEffect(() => {
-    setValue(status);
-  }, [status]);
+  // Optimistic value while the PATCH is in flight, so the change shows
+  // immediately instead of snapping back until the store updates. Once the
+  // request settles it's cleared, and the store (REST response + broadcast)
+  // is again the single source of truth — including another user's change.
+  const [optimistic, setOptimistic] = useState<TaskStatus | null>(null);
+  const value = optimistic ?? status;
 
   async function handleChange(event: ChangeEvent<HTMLSelectElement>): Promise<void> {
     const next = event.target.value as TaskStatus;
-    const previous = value;
-    setValue(next);
+    setOptimistic(next);
     setError(null);
     setPending(true);
 
@@ -51,9 +48,9 @@ export function TaskStatusSelect({
       // _id makes the duplicate harmless.
       dispatch(taskUpserted({ projectId, task }));
     } catch (err) {
-      setValue(previous);
       setError(err instanceof ApiError ? err.message : "Couldn't update status");
     } finally {
+      setOptimistic(null);
       setPending(false);
     }
   }
