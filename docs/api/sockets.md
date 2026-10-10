@@ -89,6 +89,18 @@ socket.on("message:new", (message: Message) => …)
 
 Sent to everyone in `project:{message.project}` when a message is posted. The shape is in `docs/api/messages.md`.
 
+### `task:created` / `task:updated` / `task:deleted`
+
+```ts
+socket.on("task:created", (task: Task) => …)
+socket.on("task:updated", (task: Task) => …)
+socket.on("task:deleted", ({ projectId, taskId }) => …)
+```
+
+Sent to everyone in `project:{projectId}` after a **successful REST task mutation** (`backend/src/sockets/emitter.ts`, called from `task.controller.ts`). Task writes are REST-only (membership + CSRF already apply there — see `docs/api/tasks.md`); these events are the real-time delivery of that write. `task:created`/`task:updated` carry the task in the same JSON shape as the REST response; `task:deleted` carries only `{ projectId, taskId }` because the document is gone. The mutating client's own sockets get the event too, so clients dedupe by `_id`.
+
+Unlike `message:new`, no socket **handler** produces these — there is no `task:send`. A client must be in `project:{projectId}` to receive them, and always gets the authoritative current list from `GET …/tasks` on every (re)join (see Notes).
+
 ### `user:online` / `user:offline`
 
 ```ts
