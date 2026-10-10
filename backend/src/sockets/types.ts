@@ -21,6 +21,12 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
   "message:new": (message: MessageDto) => void;
+  // Emitted by the REST task layer (via sockets/emitter.ts), not by a handler:
+  // task writes stay REST (membership + CSRF already enforced), only the
+  // delivery is real-time.
+  "task:created": (task: TaskDocument) => void;
+  "task:updated": (task: TaskDocument) => void;
+  "task:deleted": (payload: { projectId: string; taskId: string }) => void;
   "user:online": (payload: { projectId: string; userId: string }) => void;
   "user:offline": (payload: { projectId: string; userId: string }) => void;
   "typing:start": (payload: { projectId: string; userId: string }) => void;
