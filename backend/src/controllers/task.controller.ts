@@ -1,10 +1,14 @@
 import type { Request, Response } from "express";
 import * as taskService from "../services/task.service";
 import { createTaskSchema, updateTaskSchema } from "../validators/task.validators";
+import { emitTaskCreated, emitTaskDeleted, emitTaskUpdated } from "../sockets/emitter";
 
 export async function create(req: Request, res: Response): Promise<void> {
   const input = createTaskSchema.parse(req.body);
   const task = await taskService.createTask(req.workspace!, req.project!, req.userId as string, input);
+  // Broadcast after the write succeeds; the sender's own sockets are in the
+  // room too, so they get it as well and the client dedupes by _id.
+  emitTaskCreated(task.project.toString(), task);
   res.status(201).json({ task });
 }
 
