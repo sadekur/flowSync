@@ -8,7 +8,7 @@ import { registerProjectHandlers } from "./handlers/project.handlers";
 import { registerMessageHandlers } from "./handlers/message.handlers";
 import { registerTypingHandlers } from "./handlers/typing.handlers";
 import { removePresenceFromAllRooms } from "./presence";
-import type { IoServer } from "./types";
+import { userRoom, type IoServer } from "./types";
 
 export function createSocketServer(httpServer: http.Server): IoServer {
   const io: IoServer = new Server(httpServer, {
@@ -31,6 +31,10 @@ export function createSocketServer(httpServer: http.Server): IoServer {
 
   io.on("connection", (socket) => {
     logger.info(`socket connected: ${socket.id} (user ${socket.data.userId})`);
+
+    // Join the user's own room so notifications reach them regardless of which
+    // project (if any) they're viewing.
+    socket.join(userRoom(socket.data.userId));
 
     registerProjectHandlers(socket);
     registerMessageHandlers(socket);

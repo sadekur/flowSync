@@ -1,5 +1,6 @@
 import type { TaskDocument } from "../models/Task";
-import { projectRoom, type IoServer } from "./types";
+import type { NotificationDto } from "../services/notification.service";
+import { projectRoom, userRoom, type IoServer } from "./types";
 
 /**
  * The REST layer (task controllers) needs to broadcast to project rooms, but
@@ -30,4 +31,10 @@ export function emitTaskUpdated(projectId: string, task: TaskDocument): void {
 
 export function emitTaskDeleted(projectId: string, taskId: string): void {
   io?.to(projectRoom(projectId)).emit("task:deleted", { projectId, taskId });
+}
+
+// Addressed to a person, not a project: goes to every socket the recipient has
+// open (all their tabs), via the room joined at connection.
+export function emitNotification(recipientId: string, notification: NotificationDto): void {
+  io?.to(userRoom(recipientId)).emit("notification:new", notification);
 }

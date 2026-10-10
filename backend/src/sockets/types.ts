@@ -1,6 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import type { MessageDto } from "../services/message.service";
 import type { TaskDocument } from "../models/Task";
+import type { NotificationDto } from "../services/notification.service";
 
 // Mirrored by hand in src/types/socket.ts — the frontend can't import from
 // backend/ (separate tsconfig scope), so keep both in sync when adding events.
@@ -27,6 +28,9 @@ export interface ServerToClientEvents {
   "task:created": (task: TaskDocument) => void;
   "task:updated": (task: TaskDocument) => void;
   "task:deleted": (payload: { projectId: string; taskId: string }) => void;
+  // Delivered to the recipient's own `user:{id}` room, so it reaches them even
+  // when they aren't viewing the project (see sockets/index.ts).
+  "notification:new": (notification: NotificationDto) => void;
   "user:online": (payload: { projectId: string; userId: string }) => void;
   "user:offline": (payload: { projectId: string; userId: string }) => void;
   "typing:start": (payload: { projectId: string; userId: string }) => void;
@@ -45,6 +49,13 @@ export type IoSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterS
 
 export function projectRoom(projectId: string): string {
   return `project:${projectId}`;
+}
+
+// A user's own room, joined at connection — the delivery target for anything
+// addressed to a person rather than a project (notifications), so it reaches
+// them whether or not they're viewing the project it refers to.
+export function userRoom(userId: string): string {
+  return `user:${userId}`;
 }
 
 // A client can emit without an ack callback; never let that throw.
