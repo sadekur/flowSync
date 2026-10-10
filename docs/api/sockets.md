@@ -1,6 +1,6 @@
 # Socket.IO
 
-**Implemented:** connection, auth and project rooms (Step 6); chat (Step 7).
+**Implemented:** connection, auth and project rooms (Step 6); chat (Step 7); typing & presence (Step 8).
 
 Same host/port as the REST API (`NEXT_PUBLIC_SOCKET_URL`, default `http://localhost:4000`), default path `/socket.io/`. Event types: `backend/src/sockets/types.ts`, mirrored by hand in `src/types/socket.ts`.
 
@@ -35,6 +35,7 @@ socket.emit("project:join", { projectId }, (res) => …)
 
 - `projectId`: the project's **ObjectId**. Slugs are not accepted, so each project maps to exactly one room.
 - Joins room `project:{projectId}` if the user is a member of the project's workspace (same rule as `requireWorkspaceMember`).
+- On success the socket is also registered in Redis presence for the room (see `user:online` below) and the ack returns the current online snapshot: `{ ok: true, onlineUserIds: string[] }`.
 - Errors:
   - `"Invalid projectId"`: not an ObjectId
   - `"Project not found"`: the project doesn't exist **or** the user isn't a member. Both cases return the same error on purpose, so project ids can't be probed.
@@ -66,6 +67,18 @@ socket.emit("message:send", { projectId, text }, (res) => …)
   - `"Project not found"`: doesn't exist **or** not a member
   - `"Internal error"`
 
+### `typing:start` / `typing:stop`
+
+```ts
+socket.emit("typing:start", { projectId }, (res) => …)
+socket.emit("typing:stop", { projectId }, (res) => …)
+```
+
+- `projectId`: the project's **ObjectId** (no slugs).
+- Ephemeral — nothing is stored anywhere. `typing:start` re-checks workspace membership (like `message:send`) and is rate-limited: **30 starts per 10 s per user** (the client already throttles to one per ~2.5 s, so this only caps a misbehaving client). `typing:stop` skips both checks: it only ever clears an indicator and reveals nothing, and it's sent on input-clear and page navigation where speed matters more.
+- The server relays `typing:start`/`typing:stop` to the project room **excluding the sender** (`socket.to(room)`), carrying `{ projectId, userId }`.
+- Errors: `"Invalid projectId"`, `"Rate limited"`, `"Project not found"` (start only), `"Internal error"`.
+
 ## Server → client events
 
 ### `message:new`
@@ -76,7 +89,28 @@ socket.on("message:new", (message: Message) => …)
 
 Sent to everyone in `project:{message.project}` when a message is posted. The shape is in `docs/api/messages.md`.
 
+### `user:online` / `user:offline`
+
+```ts
+socket.on("user:online", ({ projectId, userId }) => …)
+socket.on("user:offline", ({ projectId, userId }) => …)
+```
+
+Sent to everyone in `project:{projectId}` when a user's **first** socket joins the room (`user:online`) or their **last** socket leaves it — by `project:leave` or disconnect (`user:offline`). Presence is per project room, not global.
+
+Presence lives **only in Redis** (never Mongo): one hash per project, `presence:project:{projectId}`, field = userId, value = the number of that user's sockets in the room. Multi-tab semantics fall out of the count: a second tab bumps it without another `user:online`, closing one of two tabs doesn't fire `user:offline` while the other stays connected. The keys carry a 24 h TTL (refreshed on every change) purely as a crash guard. Clients also get the full snapshot from the `project:join` ack, so the online list renders correctly even when a page loads after everyone else already joined.
+
+### `typing:start` / `typing:stop` (server → client)
+
+```ts
+socket.on("typing:start", ({ projectId, userId }) => …)
+socket.on("typing:stop", ({ projectId, userId }) => …)
+```
+
+Relayed `typing:start`/`typing:stop` events, excluding the sender. Clients show "X is typing…" on `typing:start` and clear it on `typing:stop` **or** their own expiry timer (~3.5 s), so a sender whose tab dies mid-typing never leaves a stuck indicator.
+
 ## Notes
 
 - Rooms are per-connection. After any reconnect the client must emit `project:join` again. `socketMiddleware` does this automatically for the currently open project.
 - Events aren't replayed. Anything posted while a client was out of the room is missed. After every (re)join, the chat UI fetches `GET …/messages?after=<newest id it has>` to fill the gap.
+- Presence isn't replayed either — that's what the `onlineUserIds` snapshot in the `project:join` ack is for.
