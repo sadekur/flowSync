@@ -5,6 +5,7 @@ import { connectDB, disconnectDB } from "./config/db";
 import { connectRedis, disconnectRedis } from "./config/redis";
 import { logger } from "./utils/logger";
 import { createSocketServer } from "./sockets";
+import { setIo } from "./sockets/emitter";
 
 async function main(): Promise<void> {
   await connectRedis();
