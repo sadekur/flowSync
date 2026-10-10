@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 8 (typing & presence) complete; backend verified live, browser UI pending a manual check by the user. Redis-backed presence per project room (`user:online`/`user:offline`, multi-tab aware, join-ack snapshot) plus ephemeral `typing:start`/`typing:stop`, with an "Online now" list and a typing indicator in the chat UI.
+Step 8 (typing & presence) complete and verified live — scripted wire-protocol test (31/31) plus a two-user check in a real browser. Redis-backed presence per project room (`user:online`/`user:offline`, multi-tab aware, join-ack snapshot) plus ephemeral `typing:start`/`typing:stop`, with an "Online now" list and a typing indicator in the chat UI.
 
 ## Completed
 
@@ -56,7 +56,7 @@ Step 8 (typing & presence) complete; backend verified live, browser UI pending a
   - a member removed from the workspace can't send while still in the room
   - workspace delete cascades to messages
   - throwaway `s7test-*` users and their workspace deleted from Atlas afterwards
-- [ ] Browser check of the chat UI. Not done by Claude: browser automation isn't allowed to register or log in accounts. Waiting on a manual two-window check by the user.
+- [x] Browser check of the chat UI, done with agent-browser driving two isolated browser sessions (two real throwaway accounts in one workspace): the second user's message appeared in the first user's chat without a reload, then the throwaway users/workspace/messages were deleted from Atlas.
 
 - [x] Step 8: Typing & presence
   - Backend:
@@ -76,8 +76,13 @@ Step 8 (typing & presence) complete; backend verified live, browser UI pending a
   - multi-tab: second socket of the same user bumps the count without a second `user:online`; leaving one of two sockets fires nothing; the last socket fires `user:offline`; disconnect (not just leave) fires it too
   - non-member `typing:start` rejected ("Project not found"); invalid projectId rejected; typing rate limit hit after 30 starts in the window
   - throwaway `s8test-*` users and their workspace deleted from Atlas afterwards
+- [x] Verified in a real browser (agent-browser, two isolated sessions with two real accounts in one workspace):
+  - "Online now" showed the other member with a green dot on both sides; when one user navigated away, the other's list switched to "No one else is viewing this project right now." (Redis hash confirmed the decrement)
+  - typing indicator "Browser B is typing…" appeared in user A's chat while B typed, and auto-cleared ~3 s after typing stopped
+  - a message sent by B appeared in A's chat live (screenshots captured)
+  - surfaced and fixed a real frontend bug the scripted test couldn't see: `presenceSlice` never consumed the join-ack snapshot — `presenceHydrated` was a dead action, so the online list stayed empty. It now hydrates from the `roomJoined` action's `onlineUserIds` payload (reducer removed)
+  - test users/workspace/project/message deleted from Atlas afterwards
 
 ## Next Steps
 
-1. Manual browser check of Step 7 chat + Step 8 presence/typing (two users in two browser profiles or one incognito window): online list updates as the second user opens/closes the project, typing indicator appears while they type.
-2. **Step 9: Real-time task updates** — task mutations broadcast to the project room, UI updates without refresh.
+1. **Step 9: Real-time task updates** — task mutations broadcast to the project room, UI updates without refresh.
