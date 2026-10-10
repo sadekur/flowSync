@@ -125,4 +125,5 @@ Relayed `typing:start`/`typing:stop` events, excluding the sender. Clients show 
 
 - Rooms are per-connection. After any reconnect the client must emit `project:join` again. `socketMiddleware` does this automatically for the currently open project.
 - Events aren't replayed. Anything posted while a client was out of the room is missed. After every (re)join, the chat UI fetches `GET …/messages?after=<newest id it has>` to fill the gap.
+- Task events aren't replayed either. After every (re)join the task list refetches the full `GET …/tasks` list (it isn't paged), which also covers the gap between the server render and the first join. A task deleted while the client was disconnected is only reconciled by that refetch catching it missing — the client merges rather than replaces, so it won't be re-added but isn't actively removed either until the next full hydrate; acceptable for the MVP.
 - Presence isn't replayed either — that's what the `onlineUserIds` snapshot in the `project:join` ack is for.
