@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 7 (real-time chat) complete; backend verified live, browser UI pending a manual check by the user. Per-project chat: saved to MongoDB, sent via `message:send`, broadcast as `message:new` to the project room, history paged over REST, catch-up after reconnect.
+Step 8 (typing & presence) complete; backend verified live, browser UI pending a manual check by the user. Redis-backed presence per project room (`user:online`/`user:offline`, multi-tab aware, join-ack snapshot) plus ephemeral `typing:start`/`typing:stop`, with an "Online now" list and a typing indicator in the chat UI.
 
 ## Completed
 
@@ -58,7 +58,26 @@ Step 7 (real-time chat) complete; backend verified live, browser UI pending a ma
   - throwaway `s7test-*` users and their workspace deleted from Atlas afterwards
 - [ ] Browser check of the chat UI. Not done by Claude: browser automation isn't allowed to register or log in accounts. Waiting on a manual two-window check by the user.
 
+- [x] Step 8: Typing & presence
+  - Backend:
+    - `sockets/presence.ts`: Redis hash per project (`presence:project:{projectId}`, field = userId, value = that user's socket count), `user:online` on 0 → 1 and `user:offline` on 1 → 0, 24 h TTL crash guard, disconnect cleanup over `socket.rooms`
+    - `project:join` now registers presence and acks `{ ok: true, onlineUserIds }` (the online snapshot); `project:leave` unregisters it
+    - `sockets/handlers/typing.handlers.ts`: `typing:start` (zod, Redis rate limit 30/10 s, per-event membership re-check, relayed via `socket.to(room)`) and `typing:stop` (no checks — it only clears an indicator)
+    - `sockets/index.ts` registers the typing handlers and runs presence cleanup on disconnect; event types extended in `sockets/types.ts`
+  - Frontend:
+    - `store/presenceSlice.ts`: online + typing user ids for the open project, hydrated from the join ack, idempotent reducers, reset on disconnect/leave
+    - `socketMiddleware` handles `user:online`/`user:offline`/`typing:start`/`typing:stop`, throttles outgoing typing (one start per 2.5 s, auto-stop after 3 s, stop on navigation), and expires peers' typing indicators after 3.5 s
+    - `components/projects/PresenceList.tsx`: "Online now" list (green dot) resolved against the page's member list
+    - `ChatPanel` shows "X is typing…" (aria-live) and dispatches typing commands on input change, send and unmount
+  - Documented in `docs/api/sockets.md` and `DECISIONS.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + local Redis):
+  - join ack returns the online snapshot; second member joining broadcasts `user:online` to the first
+  - `typing:start` relayed to the other member (sender excluded); `typing:stop` clears it
+  - multi-tab: second socket of the same user bumps the count without a second `user:online`; leaving one of two sockets fires nothing; the last socket fires `user:offline`; disconnect (not just leave) fires it too
+  - non-member `typing:start` rejected ("Project not found"); invalid projectId rejected; typing rate limit hit after 30 starts in the window
+  - throwaway `s8test-*` users and their workspace deleted from Atlas afterwards
+
 ## Next Steps
 
-1. Manual browser check of Step 7 chat (two users in two browser profiles or one incognito window).
-2. **Step 8: Typing & presence**: `typing:start/stop`, `user:online/offline` backed by Redis.
+1. Manual browser check of Step 7 chat + Step 8 presence/typing (two users in two browser profiles or one incognito window): online list updates as the second user opens/closes the project, typing indicator appears while they type.
+2. **Step 9: Real-time task updates** — task mutations broadcast to the project room, UI updates without refresh.
