@@ -1,5 +1,5 @@
 // Hand-mirrored from backend/src/sockets/types.ts — keep both in sync.
-import type { Message, Task } from "./api";
+import type { Message, Notification, Task } from "./api";
 
 // `T` is extra data carried by a successful ack (e.g. the saved message).
 export type AckResponse<T extends object = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -18,6 +18,7 @@ export interface ServerToClientEvents {
   "task:created": (task: Task) => void;
   "task:updated": (task: Task) => void;
   "task:deleted": (payload: { projectId: string; taskId: string }) => void;
+  "notification:new": (notification: Notification) => void;
   "user:online": (payload: { projectId: string; userId: string }) => void;
   "user:offline": (payload: { projectId: string; userId: string }) => void;
   "typing:start": (payload: { projectId: string; userId: string }) => void;

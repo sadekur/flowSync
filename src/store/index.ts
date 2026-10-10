@@ -4,6 +4,7 @@ import socketReducer from "./socketSlice";
 import messagesReducer from "./messagesSlice";
 import presenceReducer from "./presenceSlice";
 import tasksReducer from "./tasksSlice";
+import notificationsReducer from "./notificationsSlice";
 import { createSocketMiddleware } from "./socketMiddleware";
 
 // A factory, not a module-level singleton: Next.js Server Components share
@@ -17,6 +18,7 @@ export function makeStore() {
       messages: messagesReducer,
       presence: presenceReducer,
       tasks: tasksReducer,
+      notifications: notificationsReducer,
     },
     // prepend, not concat: the socket middleware extends dispatch's return type
     // (SocketDispatchExt), and only the first overload in the chain wins in
