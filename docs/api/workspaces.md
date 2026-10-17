@@ -12,7 +12,9 @@ Body: `{ "name": string }` → **201** `{ "workspace": {...} }` (creator becomes
 
 ## `GET /api/workspaces`
 
-Workspaces the caller is a member of. **200** `{ "workspaces": [...] }`.
+Workspaces the caller is a member of, newest first. **200** `{ "workspaces": [...] }`. Each item is `{ _id, name, slug, owner, members, createdAt, updatedAt }` with ids as strings.
+
+Served cache-aside from Redis (`cache:user:{userId}:workspaces`, 5 min TTL). Every write below that changes what a user would see deletes that user's key first, so the list is never stale after a write through this API: create (the owner), rename/delete/add member (every member), remove member (every member plus the removed one).
 
 ## `GET /api/workspaces/:workspaceId`
 
