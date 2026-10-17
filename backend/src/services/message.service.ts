@@ -32,7 +32,7 @@ function toDto(m: PopulatedMessage): MessageDto {
   };
 }
 
-export async function createMessage(project: ProjectDocument, senderId: string, text: string): Promise<MessageDto> {
+export async function createMessage(project: ProjectRef, senderId: string, text: string): Promise<MessageDto> {
   const created = await Message.create({
     project: project._id,
     workspace: project.workspace,
