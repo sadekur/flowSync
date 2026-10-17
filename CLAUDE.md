@@ -54,6 +54,10 @@ Run from the repo root.
 
 There is no `lint:backend`, `typecheck:frontend` (use the IDE/`tsc --noEmit` via Next's own tsconfig), or test script yet — tests arrive at Step 12 (`PLANNING.md`). Backend dev requires Redis running locally (on the Windows dev machine that's **Memurai**, a Redis-compatible Windows service on port 6379 that auto-starts; CLI `"C:\Program Files\Memurai\memurai-cli.exe"`) and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable.
 
+**How steps are verified live (no test runner yet):** with curl for REST, and with throwaway scripted `socket.io-client` runs for socket events, both against the real backend. Prefix test users with something like `s7test-` so cleanup can match them exactly. Browser automation must not register or log in accounts, so the browser UI check for a step is left to the user and marked pending in `PROGRESS.md`.
+
+**`README.md` prerequisites are out of date** (they mention local `mongod` and `apt install redis-server`). The notes in this file are the current ones.
+
 **`MONGO_URI` in `.env` points at a remote Atlas cluster, not local `mongod`.** A bare `mongosh` connects to the (empty) local instance — any inspection or cleanup of dev data must use `mongosh "$MONGO_URI"`. The Atlas DB also holds the human user's own workspaces/projects: when live-verifying a step, create throwaway users/data and delete only those afterwards.
 
 ## Architecture
@@ -76,6 +80,19 @@ Browser → Next.js (Server + Client Components) → Express API + Socket.IO →
 - Throw `ApiError(status, message)` (from `middleware/errorHandler.ts`) for expected failures; zod validators' `ZodError`s are turned into `400` with per-field `issues` by the same handler. Wrap every async handler/middleware in `asyncHandler`.
 - Workspace/project URL params accept **either an ObjectId or a slug** — `idOrSlugFilter` in `middleware/membership.ts` resolves both, so routes and controllers don't care which the frontend linked to. Slugs are generated once at creation (`utils/slug.ts`) and never change on rename.
 - `req.workspace` / `req.project` / `req.task` / `req.userId` are typed via `backend/src/types/express.d.ts`.
+- Cascading deletes are done by hand in `services/workspace.service.ts` and `services/project.service.ts` (`deleteMany` per child model). When you add a model that belongs to a project or workspace (e.g. notifications), add it to both cascades.
+
+### Socket event pipeline
+
+Socket handlers don't go through Express middleware, so each mutating handler repeats the same guards itself (see `sockets/handlers/message.handlers.ts`):
+
+zod `safeParse` the payload → `isRateLimited(key, limit, windowSeconds)` (`utils/rateLimit.ts`, Redis-backed, per user across all sockets) → `findProjectForMember(projectId, userId)` (`sockets/membership.ts`, the socket version of `loadProject` + `requireWorkspaceMember`) → service call → `socket.nsp.to(projectRoom(id)).emit(...)` → `ack({ ok, ... })` wrapped in `safeAck`.
+
+- Membership is re-checked on **every write**, not only at `project:join`, so a user removed from the workspace can't keep posting from a room they're still in.
+- "Doesn't exist" and "not a member" get the same response (`Project not found`), so ids can't be probed.
+- Broadcasts use namespace-level emit, so the sender's own tabs receive the event too. The client dedupes against the ack by `_id`.
+- Socket handlers accept ObjectIds only, not slugs.
+- Services return explicit DTOs (e.g. `MessageDto`). Frontend copies of these shapes live in `src/types/api.ts` and `src/types/socket.ts` and are kept in sync by hand. Update both sides together.
 
 ### Frontend ↔ API
 
