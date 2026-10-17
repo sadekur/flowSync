@@ -136,3 +136,9 @@ Relayed `typing:start`/`typing:stop` events, excluding the sender. Clients show 
 - Task events aren't replayed either. After every (re)join the task list refetches the full `GET …/tasks` list (it isn't paged), which also covers the gap between the server render and the first join. A task deleted while the client was disconnected is only reconciled by that refetch catching it missing — the client merges rather than replaces, so it won't be re-added but isn't actively removed either until the next full hydrate; acceptable for the MVP.
 - Presence isn't replayed either — that's what the `onlineUserIds` snapshot in the `project:join` ack is for.
 - Notifications aren't replayed. `notification:new` only reaches a connected user; the persisted list is fetched once on mount by the bell (`GET /api/notifications`), so an offline recipient sees everything on their next load.
+
+## Multiple backend instances
+
+Every event in this document works across backend instances. The server uses `@socket.io/redis-adapter`, so a broadcast to `project:{id}` or `user:{id}` from any instance (a socket handler or the REST task layer) reaches sockets connected to every other instance. Presence counts, rate limits and the membership cache are in the same shared Redis, so they agree across instances too.
+
+The client doesn't change. Each connection is still served by one instance for its whole life, and a reconnect may land on a different one, which the auto re-join already handles. Behind a load balancer, the HTTP long-polling transport needs sticky sessions (Step 13's Nginx config); WebSocket-only connections don't.
