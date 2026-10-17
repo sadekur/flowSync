@@ -52,6 +52,8 @@ Run from the repo root.
 | `npm run lint:frontend` | ESLint on `src/` only (backend is excluded — different runtime, see `eslint.config.mjs`) |
 | `npm run typecheck:backend` | Same discovery/flags as `build:backend`, with `--noEmit` |
 
+**On Windows, `build:backend` / `typecheck:backend` need a POSIX script shell.** npm defaults to `cmd.exe` there, and those scripts then fail with `'f' is not recognized`. Run them as `npm run typecheck:backend --script-shell="$(which bash)"` from the Bash tool, or set it once with `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
+
 There is no `lint:backend`, `typecheck:frontend` (use the IDE/`tsc --noEmit` via Next's own tsconfig), or test script yet — tests arrive at Step 12 (`PLANNING.md`). Backend dev requires Redis running locally (on the Windows dev machine that's **Memurai**, a Redis-compatible Windows service on port 6379 that auto-starts; CLI `"C:\Program Files\Memurai\memurai-cli.exe"`) and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable.
 
 **How steps are verified live (no test runner yet):** with curl for REST, and with throwaway scripted `socket.io-client` runs for socket events, both against the real backend. Prefix test users with something like `s7test-` so cleanup can match them exactly. Browser automation must not register or log in accounts, so the browser UI check for a step is left to the user and marked pending in `PROGRESS.md`.
