@@ -23,6 +23,10 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     // Largest legit packet is one chat message (≤2000 chars, ≤8KB as UTF-8);
     // the 1MB default would let a client make the server buffer far more.
     maxHttpBufferSize: 64 * 1024,
+    // Rooms are local to each process. The Redis adapter relays every
+    // broadcast (room emits, io.to() from the REST layer) over pub/sub, so it
+    // reaches sockets connected to any backend instance, not just this one.
+    adapter: createAdapter(pubClient, subClient),
   });
 
   // Populates socket.request.cookies for socketAuth — same parser as the REST app.
