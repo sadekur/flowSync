@@ -115,25 +115,22 @@ async function notifyAssignee(
 }
 
 /** Notifies every workspace member except the sender that a message was posted. */
-export async function notifyNewMessage(
-  project: ProjectDocument,
-  message: MessageDto,
-  senderId: string,
-): Promise<void> {
-  const workspace = await Workspace.findById(project.workspace).select("members").lean<{ members: Types.ObjectId[] }>();
-  if (!workspace) return;
+export async function notifyNewMessage(project: ProjectRef, message: MessageDto, senderId: string): Promise<void> {
+  // Same cached member list the send's membership check just read.
+  const members = await getWorkspaceMemberIds(project.workspace);
+  if (!members) return;
 
-  const recipients = workspace.members.filter((member) => member.toString() !== senderId);
+  const recipients = members.filter((member) => member !== senderId);
   if (recipients.length === 0) return;
 
   const preview = message.text.length > 120 ? `${message.text.slice(0, 120)}…` : message.text;
   const created = await Notification.insertMany(
     recipients.map((recipient) => ({
-      recipient,
+      recipient: new Types.ObjectId(recipient),
       actor: new Types.ObjectId(senderId),
       type: "message" as const,
-      workspace: project.workspace,
-      project: project._id,
+      workspace: new Types.ObjectId(project.workspace),
+      project: new Types.ObjectId(project._id),
       message: new Types.ObjectId(message._id),
       preview,
     })),
