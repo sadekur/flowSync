@@ -37,7 +37,8 @@ export interface ServerToClientEvents {
   "typing:stop": (payload: { projectId: string; userId: string }) => void;
 }
 
-// Only needed once the Redis adapter lands (Step 11).
+// For io.serverSideEmit between backend instances. The Redis adapter (Step 11)
+// doesn't need any: room broadcasts are relayed without declaring events here.
 export interface InterServerEvents {}
 
 export interface SocketData {
