@@ -1,6 +1,7 @@
 import type { Types } from "mongoose";
 import { Message } from "../models/Message";
 import type { ProjectDocument } from "../models/Project";
+import type { ProjectRef } from "./project.service";
 import type { ListMessagesQuery } from "../validators/message.validators";
 
 // The one wire shape for a message, used by both the REST history endpoint
