@@ -36,9 +36,18 @@ export async function updateProject(project: ProjectDocument, input: UpdateProje
   return project;
 }
 
+/** The project's workspace id, or null if it doesn't exist. Cached. */
+export async function getProjectWorkspaceId(projectId: string): Promise<string | null> {
+  return cacheAside(cacheKeys.projectWorkspace(projectId), PROJECT_WORKSPACE_TTL_SECONDS, async () => {
+    const project = await Project.findById(projectId).select("workspace").lean<{ workspace: Types.ObjectId }>();
+    return project ? project.workspace.toString() : null;
+  });
+}
+
 export async function deleteProject(project: ProjectDocument): Promise<void> {
   await Task.deleteMany({ project: project._id });
   await Message.deleteMany({ project: project._id });
   await Notification.deleteMany({ project: project._id });
   await project.deleteOne();
+  await invalidateCache(cacheKeys.projectWorkspace(project.id));
 }
