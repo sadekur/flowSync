@@ -1,7 +1,9 @@
 import type http from "node:http";
 import { Server } from "socket.io";
 import cookieParser from "cookie-parser";
+import { createAdapter } from "@socket.io/redis-adapter";
 import { env } from "../config/env";
+import { pubClient, subClient } from "../config/redis";
 import { logger } from "../utils/logger";
 import { socketAuth } from "./auth";
 import { registerProjectHandlers } from "./handlers/project.handlers";
