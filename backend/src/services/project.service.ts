@@ -42,6 +42,13 @@ export async function updateProject(project: ProjectDocument, input: UpdateProje
   return project;
 }
 
+// Just enough of a project to write under it (messages, notifications) —
+// what the cached socket membership check returns instead of a full document.
+export interface ProjectRef {
+  _id: string;
+  workspace: string;
+}
+
 /** The project's workspace id, or null if it doesn't exist. Cached. */
 export async function getProjectWorkspaceId(projectId: string): Promise<string | null> {
   return cacheAside(cacheKeys.projectWorkspace(projectId), PROJECT_WORKSPACE_TTL_SECONDS, async () => {
