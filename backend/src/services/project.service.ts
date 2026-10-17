@@ -1,3 +1,4 @@
+import type { Types } from "mongoose";
 import { Project, type ProjectDocument } from "../models/Project";
 import { Task } from "../models/Task";
 import { Message } from "../models/Message";
