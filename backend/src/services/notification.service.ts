@@ -1,7 +1,8 @@
 import { Types } from "mongoose";
 import { Notification, type NotificationType } from "../models/Notification";
-import { Workspace } from "../models/Workspace";
 import type { ProjectDocument } from "../models/Project";
+import type { ProjectRef } from "./project.service";
+import { getWorkspaceMemberIds } from "./workspace.service";
 import type { TaskDocument } from "../models/Task";
 import type { MessageDto } from "./message.service";
 import { emitNotification } from "../sockets/emitter";
