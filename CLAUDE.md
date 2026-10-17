@@ -80,7 +80,7 @@ Browser → Next.js (Server + Client Components) → Express API + Socket.IO →
 - Throw `ApiError(status, message)` (from `middleware/errorHandler.ts`) for expected failures; zod validators' `ZodError`s are turned into `400` with per-field `issues` by the same handler. Wrap every async handler/middleware in `asyncHandler`.
 - Workspace/project URL params accept **either an ObjectId or a slug** — `idOrSlugFilter` in `middleware/membership.ts` resolves both, so routes and controllers don't care which the frontend linked to. Slugs are generated once at creation (`utils/slug.ts`) and never change on rename.
 - `req.workspace` / `req.project` / `req.task` / `req.userId` are typed via `backend/src/types/express.d.ts`.
-- Cascading deletes are done by hand in `services/workspace.service.ts` and `services/project.service.ts` (`deleteMany` per child model). When you add a model that belongs to a project or workspace (e.g. notifications), add it to both cascades.
+- Cascading deletes are done by hand with one `deleteMany` per child model in `services/workspace.service.ts`, `project.service.ts` and `task.service.ts`. When you add a model that references a workspace, project or task, add it to every cascade above it.
 
 ### Socket event pipeline
 
