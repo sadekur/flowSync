@@ -130,6 +130,30 @@ Step 11 (Redis at scale) complete and verified live with two backend instances o
   - opening the dropdown listed both items ("… sent a message: …" / "… assigned you …") with relative times and correct `/projects/:id?workspace=:id` links, and cleared the badge to 0 (mark-all-read)
   - throwaway `s10ui-*` users/workspace deleted from Atlas afterwards
 
+- [x] Environment, 2026-10-17: the dev machine's Windows install changed, so Memurai was missing. Reinstalled Memurai Developer 4.1.2 (it needs an elevated MSI install; `winget --silent` fails with 1603). Added a git `safe.directory` exception because the repo folder is owned by the old install's account SID.
+- [x] Step 11: Redis at scale
+  - Caching (cache-aside, `utils/cache.ts`):
+    - `cacheAside(key, ttl, load)`: Redis → else Mongo → store as JSON. Fails open to Mongo on Redis errors and never caches `null`. `invalidateCache(...keys)` runs after writes and logs on failure.
+    - `cache:project:{id}:workspace` (5 min) via `project.service.getProjectWorkspaceId`
+    - `cache:workspace:{id}:members` (60 s) via `workspace.service.getWorkspaceMemberIds`
+    - `cache:user:{id}:workspaces` (5 min): `listWorkspacesForUser` now returns an explicit `WorkspaceSummary` (same JSON keys as before)
+    - `sockets/membership.ts` `findProjectForMember` reads only those two cached values and returns a `ProjectRef` `{ _id, workspace }`. `createMessage` / `notifyNewMessage` take a `ProjectRef`, and `notifyNewMessage` reuses the cached member list.
+    - Invalidation in the services: workspace create/rename/delete/add member/remove member, project delete (workspace delete also drops every child project's mapping)
+  - Socket.IO Redis adapter:
+    - `@socket.io/redis-adapter@8.3.0`, wired in `sockets/index.ts` via the `adapter` server option
+    - `config/redis.ts`: dedicated `pubClient` / `subClient` (`redis.duplicate()`), connected and disconnected with the main client
+  - Documented in `docs/api/workspaces.md` (list caching, immediate effect of member removal), `docs/api/sockets.md` ("Multiple backend instances") and `DECISIONS.md`. No new endpoints.
+- [x] Verified live with two backend instances (`PORT=4001` + `PORT=4002`, Atlas + Memurai), 30/30:
+  - adapter channels present in Redis (`PUBSUB CHANNELS socket.io*`)
+  - A on 4001 and B on 4002 in the same project: `user:online`, the join snapshot (A + B), `message:new`, `notification:new` (user room), `typing:start`, and `task:created` from a REST write on 4001 all reached B on 4002
+  - an outsider socket on 4001 received none of it
+  - cache keys populated after a send; members TTL ≤ 60 s; workspace list cached, identical JSON from both instances, same key set as before
+  - rename on 4002 → A's list on 4001 shows the new name immediately
+  - removing B (on 4001) clears the member cache and B's list: B's `message:send` and `typing:start` on 4002 are rejected right away, and B's list drops the workspace. Re-adding B lets them send again immediately.
+  - a new workspace shows in the owner's list right away; deleting a project clears its mapping and further sends to it are rejected
+  - throwaway `s11test-*` users and their workspaces deleted from Atlas afterwards
+  - `npm run typecheck:backend` passes
+
 ## Next Steps
 
-1. **Step 11: Redis at scale** — formalize caching (cache-aside on hot reads with explicit invalidation) and add the Socket.IO Redis adapter (`@socket.io/redis-adapter`) so rooms/events work across multiple backend instances.
+1. **Step 12: Testing**: API integration tests, socket reconnect tests, key component tests.
