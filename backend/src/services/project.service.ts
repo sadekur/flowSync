@@ -5,7 +5,12 @@ import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
 import type { WorkspaceDocument } from "../models/Workspace";
 import { generateUniqueSlug } from "../utils/slug";
+import { cacheAside, cacheKeys, invalidateCache } from "../utils/cache";
 import type { CreateProjectInput, UpdateProjectInput } from "../validators/project.validators";
+
+// Only a delete changes the mapping (projects never move workspace), and that
+// invalidates it, so the TTL is just a backstop for a missed invalidation.
+const PROJECT_WORKSPACE_TTL_SECONDS = 5 * 60;
 
 export async function createProject(
   workspace: WorkspaceDocument,
