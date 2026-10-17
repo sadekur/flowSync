@@ -37,3 +37,5 @@ Owner only. Body: `{ "email": string }` → **200** `{ "workspace": {...} }` · 
 ## `DELETE /api/workspaces/:workspaceId/members/:memberId`
 
 Owner only. **200** `{ "workspace": {...} }` · **400** cannot remove the owner.
+
+Takes effect on sockets immediately, including on other backend instances: the cached member list (`cache:workspace:{id}:members`) is deleted, so the removed user's next `message:send` / `typing:start` is rejected with `Project not found`. They stay in the project room until they leave or reconnect, but can't write to it.
