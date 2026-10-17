@@ -6,7 +6,9 @@ import { logger } from "../utils/logger";
 import { socketAuth } from "./auth";
 import { registerProjectHandlers } from "./handlers/project.handlers";
 import { registerMessageHandlers } from "./handlers/message.handlers";
-import type { IoServer } from "./types";
+import { registerTypingHandlers } from "./handlers/typing.handlers";
+import { removePresenceFromAllRooms } from "./presence";
+import { userRoom, type IoServer } from "./types";
 
 export function createSocketServer(httpServer: http.Server): IoServer {
   const io: IoServer = new Server(httpServer, {
@@ -30,8 +32,23 @@ export function createSocketServer(httpServer: http.Server): IoServer {
   io.on("connection", (socket) => {
     logger.info(`socket connected: ${socket.id} (user ${socket.data.userId})`);
 
+    // Join the user's own room so notifications reach them regardless of which
+    // project (if any) they're viewing.
+    socket.join(userRoom(socket.data.userId));
+
     registerProjectHandlers(socket);
     registerMessageHandlers(socket);
+    registerTypingHandlers(socket);
+
+    // Presence cleanup must run on "disconnecting", not "disconnect":
+    // socket.io leaves every room (join([])) before emitting "disconnect",
+    // so by then socket.rooms no longer lists the project rooms. Best
+    // effort — a missed decrement expires with the presence TTL.
+    socket.on("disconnecting", (reason) => {
+      removePresenceFromAllRooms(socket).catch((err) =>
+        logger.error(`presence cleanup failed on disconnect (user ${socket.data.userId})`, err),
+      );
+    });
 
     socket.on("disconnect", (reason) => {
       logger.info(`socket disconnected: ${socket.id} (user ${socket.data.userId}) — ${reason}`);

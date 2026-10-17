@@ -57,3 +57,20 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
 }
+
+export type NotificationType = "task_assigned" | "task_updated" | "message";
+
+// Same shape from GET /api/notifications and the `notification:new` socket
+// event.
+export interface Notification {
+  _id: string;
+  type: NotificationType;
+  read: boolean;
+  actor: { _id: string; name: string } | null;
+  workspace: string;
+  project: string;
+  task?: string;
+  message?: string;
+  preview: string;
+  createdAt: string;
+}

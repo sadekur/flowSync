@@ -5,6 +5,7 @@ import { connectDB, disconnectDB } from "./config/db";
 import { connectRedis, disconnectRedis } from "./config/redis";
 import { logger } from "./utils/logger";
 import { createSocketServer } from "./sockets";
+import { setIo } from "./sockets/emitter";
 
 async function main(): Promise<void> {
   await connectRedis();
@@ -15,6 +16,8 @@ async function main(): Promise<void> {
   // Socket.IO shares the same server/port as the REST API.
   const httpServer = http.createServer(app);
   const io = createSocketServer(httpServer);
+  // Publishes `io` to the REST layer (task controllers broadcast through it).
+  setIo(io);
 
   httpServer.listen(env.PORT, () => {
     logger.info(`Backend listening on port ${env.PORT}`);
@@ -25,6 +28,7 @@ async function main(): Promise<void> {
     // io.close() also closes httpServer and disconnects every open socket,
     // which httpServer.close() alone would wait on forever.
     await io.close();
+    setIo(null);
     await disconnectDB();
     disconnectRedis();
     process.exit(0);

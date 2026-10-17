@@ -1,4 +1,5 @@
 import { Task, type TaskDocument } from "../models/Task";
+import { Notification } from "../models/Notification";
 import type { ProjectDocument } from "../models/Project";
 import type { WorkspaceDocument } from "../models/Workspace";
 import { ApiError } from "../middleware/errorHandler";
@@ -56,5 +57,6 @@ export async function updateTask(
 }
 
 export async function deleteTask(task: TaskDocument): Promise<void> {
+  await Notification.deleteMany({ task: task._id });
   await task.deleteOne();
 }

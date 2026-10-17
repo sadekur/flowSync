@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/client-api";
-import type { User } from "@/types/api";
+import { useAppDispatch } from "@/store/hooks";
+import { taskUpserted } from "@/store/tasksSlice";
+import type { Task, User } from "@/types/api";
 
 export function CreateTaskForm({
   workspaceId,
@@ -14,7 +15,7 @@ export function CreateTaskForm({
   projectId: string;
   members: User[];
 }) {
-  const router = useRouter();
+  const dispatch = useAppDispatch();
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +27,15 @@ export function CreateTaskForm({
     setPending(true);
 
     try {
-      await apiFetch(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`, {
-        method: "POST",
-        body: JSON.stringify({ title, assignee: assignee || undefined }),
-      });
+      const { task } = await apiFetch<{ task: Task }>(
+        `/api/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+        { method: "POST", body: JSON.stringify({ title, assignee: assignee || undefined }) },
+      );
+      // Show it straight away; the matching task:created broadcast is deduped
+      // by _id in the reducer.
+      dispatch(taskUpserted({ projectId, task }));
       setTitle("");
       setAssignee("");
-      router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {

@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 7 (real-time chat) complete; backend verified live, browser UI pending a manual check by the user. Per-project chat: saved to MongoDB, sent via `message:send`, broadcast as `message:new` to the project room, history paged over REST, catch-up after reconnect.
+Step 10 (real-time notifications) complete and verified live — a scripted wire-protocol test (21/21) plus a browser check against the real backend (Atlas + Redis). Task assignments/updates and new messages create persisted per-user notifications that are pushed over Socket.IO to a `user:{id}` room, with a header bell + unread badge and mark-all-read-on-open.
 
 ## Completed
 
@@ -56,9 +56,80 @@ Step 7 (real-time chat) complete; backend verified live, browser UI pending a ma
   - a member removed from the workspace can't send while still in the room
   - workspace delete cascades to messages
   - throwaway `s7test-*` users and their workspace deleted from Atlas afterwards
-- [ ] Browser check of the chat UI. Not done by Claude: browser automation isn't allowed to register or log in accounts. Waiting on a manual two-window check by the user.
+- [x] Browser check of the chat UI, done with agent-browser driving two isolated browser sessions (two real throwaway accounts in one workspace): the second user's message appeared in the first user's chat without a reload, then the throwaway users/workspace/messages were deleted from Atlas.
+
+- [x] Step 8: Typing & presence
+  - Backend:
+    - `sockets/presence.ts`: Redis hash per project (`presence:project:{projectId}`, field = userId, value = that user's socket count), `user:online` on 0 → 1 and `user:offline` on 1 → 0, 24 h TTL crash guard, disconnect cleanup over `socket.rooms`
+    - `project:join` now registers presence and acks `{ ok: true, onlineUserIds }` (the online snapshot); `project:leave` unregisters it
+    - `sockets/handlers/typing.handlers.ts`: `typing:start` (zod, Redis rate limit 30/10 s, per-event membership re-check, relayed via `socket.to(room)`) and `typing:stop` (no checks — it only clears an indicator)
+    - `sockets/index.ts` registers the typing handlers and runs presence cleanup on disconnect; event types extended in `sockets/types.ts`
+  - Frontend:
+    - `store/presenceSlice.ts`: online + typing user ids for the open project, hydrated from the join ack, idempotent reducers, reset on disconnect/leave
+    - `socketMiddleware` handles `user:online`/`user:offline`/`typing:start`/`typing:stop`, throttles outgoing typing (one start per 2.5 s, auto-stop after 3 s, stop on navigation), and expires peers' typing indicators after 3.5 s
+    - `components/projects/PresenceList.tsx`: "Online now" list (green dot) resolved against the page's member list
+    - `ChatPanel` shows "X is typing…" (aria-live) and dispatches typing commands on input change, send and unmount
+  - Documented in `docs/api/sockets.md` and `DECISIONS.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + local Redis):
+  - join ack returns the online snapshot; second member joining broadcasts `user:online` to the first
+  - `typing:start` relayed to the other member (sender excluded); `typing:stop` clears it
+  - multi-tab: second socket of the same user bumps the count without a second `user:online`; leaving one of two sockets fires nothing; the last socket fires `user:offline`; disconnect (not just leave) fires it too
+  - non-member `typing:start` rejected ("Project not found"); invalid projectId rejected; typing rate limit hit after 30 starts in the window
+  - throwaway `s8test-*` users and their workspace deleted from Atlas afterwards
+- [x] Verified in a real browser (agent-browser, two isolated sessions with two real accounts in one workspace):
+  - "Online now" showed the other member with a green dot on both sides; when one user navigated away, the other's list switched to "No one else is viewing this project right now." (Redis hash confirmed the decrement)
+  - typing indicator "Browser B is typing…" appeared in user A's chat while B typed, and auto-cleared ~3 s after typing stopped
+  - a message sent by B appeared in A's chat live (screenshots captured)
+  - surfaced and fixed a real frontend bug the scripted test couldn't see: `presenceSlice` never consumed the join-ack snapshot — `presenceHydrated` was a dead action, so the online list stayed empty. It now hydrates from the `roomJoined` action's `onlineUserIds` payload (reducer removed)
+  - test users/workspace/project/message deleted from Atlas afterwards
+
+- [x] Step 9: Real-time task updates
+  - Backend:
+    - `sockets/emitter.ts`: the one place the REST layer reaches `io` — a nullable reference (`setIo`) plus typed `emitTaskCreated/Updated/Deleted`, so task controllers broadcast to `project:{projectId}` after a successful write (null before startup / after shutdown ⇒ skip, never throw)
+    - `sockets/types.ts`: `ServerToClientEvents` gains `task:created`/`task:updated` (the task, same JSON as the REST response) and `task:deleted` (`{ projectId, taskId }`)
+    - `server.ts`: `setIo(io)` after `createSocketServer`, `setIo(null)` after `io.close()`
+    - `task.controller.ts`: emits after create/update/delete (delete captures ids before the doc is removed)
+  - Frontend:
+    - `store/tasksSlice.ts`: `createEntityAdapter` keyed by `_id`, newest-first; `tasksHydrated` merges (same project) / replaces (project switch), `taskUpserted`/`taskRemoved`, resets on `socketDisconnect`
+    - `socketMiddleware` translates `task:created`/`task:updated`/`task:deleted` into store actions; `src/types/socket.ts` mirrors the new events
+    - `components/tasks/TaskList.tsx` (live list, seeded from the server page, catch-up refetch on every (re)join) + `TaskCard.tsx` (memoized)
+    - `CreateTaskForm` / `TaskStatusSelect` now dispatch the REST response into the store instead of `router.refresh()`; the status select uses a short-lived optimistic value so it doesn't snap back
+    - project page passes canonical `project._id` to the task components (matching the socket room key)
+  - Documented in `docs/api/tasks.md`, `docs/api/sockets.md`, and `DECISIONS.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + Redis), 22/22:
+  - a task created/updated/deleted over REST as member A was broadcast to member B in the room as `task:created`/`task:updated`/`task:deleted`, with `task:created`/`task:updated` carrying the full task in the REST JSON shape (no `__v`) and `task:deleted` carrying `{ projectId, taskId }`
+  - the actor's own socket also received the broadcast (self-broadcast, deduped client-side)
+  - a connected socket that never joined the room received no task events
+  - a foreign-Origin handshake is still rejected
+  - throwaway `s9test-*` users and their workspace deleted from Atlas afterwards
+
+- [x] Step 10: Real-time notifications
+  - Backend:
+    - `models/Notification.ts`: `{ recipient, actor, type, workspace, project, task?, message?, preview, read }`, indexed `{ recipient, read, createdAt }`
+    - `services/notification.service.ts`: `NotificationDto`/`toDto` (populates actor name only), `notifyTaskAssigned` / `notifyTaskUpdated` (assignee-only, never the actor), `notifyNewMessage` (workspace members minus sender), `listNotifications` (newest 50 + real `unreadCount`), `markAllRead`
+    - `sockets/types.ts`: `userRoom(userId)` + `notification:new` in `ServerToClientEvents`
+    - `sockets/index.ts`: every connection joins `user:{userId}`; `sockets/emitter.ts`: `emitNotification(recipientId, …)`
+    - `task.controller.ts` notifies after create/update (previous assignee read before the update); `message.handlers.ts` fans out after the ack (best-effort, `.catch(log)` — never fails the send)
+    - `routes/notification.routes.ts` + `controllers/notification.controller.ts`: `GET /api/notifications`, `POST /api/notifications/read` (CSRF); mounted in `app.ts`
+    - cascade: `deleteWorkspace` / `deleteProject` / `deleteTask` also delete notifications
+  - Frontend:
+    - `store/notificationsSlice.ts`: entity adapter (newest-first) + `unreadCount`; `notificationsHydrated` / `notificationReceived` (idempotent count) / `allMarkedRead`; resets on `socketDisconnect`
+    - `socketMiddleware` handles `notification:new`; `src/types/socket.ts` mirrors it
+    - `components/notifications/NotificationBell.tsx` (fetch on mount, badge, dropdown, mark-all-on-open, outside-click/Escape) + memoized `NotificationItem.tsx` (composed text + relative time, links by ids)
+    - `AppHeader` renders the bell on every authenticated page
+  - Documented in `docs/api/notifications.md`, `docs/api/sockets.md`, and `DECISIONS.md`
+- [x] Verified live via a scripted run against the real backend (Atlas + Redis), 21/21:
+  - B (not viewing the project) received `notification:new` for a task assigned to them, a task update, and a new message — each with the full DTO (actor name, preview, project/workspace ids, `read: false`)
+  - the actor (A) received none of their own notifications; a non-member (C) received none
+  - `GET /api/notifications` for B → `unreadCount` 3, newest-first; A → 0
+  - unauthenticated `GET` → 401; `POST …/read` without CSRF → 403; with CSRF → 204 → `unreadCount` 0 and all `read`
+  - workspace delete cascaded the notifications; `s10test-*` users removed from Atlas afterwards
+- [x] Verified in a real browser (agent-browser), logged in as B on the dashboard:
+  - the bell badge hydrated to `1` from `GET /api/notifications` on load
+  - sending a message as A over the socket incremented B's badge to `2` live, with no reload (B was on `/dashboard`, not the project page)
+  - opening the dropdown listed both items ("… sent a message: …" / "… assigned you …") with relative times and correct `/projects/:id?workspace=:id` links, and cleared the badge to 0 (mark-all-read)
+  - throwaway `s10ui-*` users/workspace deleted from Atlas afterwards
 
 ## Next Steps
 
-1. Manual browser check of Step 7 chat (two users in two browser profiles or one incognito window).
-2. **Step 8: Typing & presence**: `typing:start/stop`, `user:online/offline` backed by Redis.
+1. **Step 11: Redis at scale** — formalize caching (cache-aside on hot reads with explicit invalidation) and add the Socket.IO Redis adapter (`@socket.io/redis-adapter`) so rooms/events work across multiple backend instances.

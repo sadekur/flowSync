@@ -4,8 +4,9 @@ import { serverFetch } from "@/lib/server-fetch";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { StoreHydrator } from "@/store/StoreHydrator";
 import { CreateTaskForm } from "@/components/tasks/CreateTaskForm";
-import { TaskStatusSelect } from "@/components/tasks/TaskStatusSelect";
+import { TaskList } from "@/components/tasks/TaskList";
 import { ProjectLiveStatus } from "@/components/projects/ProjectLiveStatus";
+import { PresenceList } from "@/components/projects/PresenceList";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import type { MessagePage, Project, Task, User, Workspace } from "@/types/api";
 
@@ -59,35 +60,19 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
           )}
         </div>
 
-        <CreateTaskForm workspaceId={workspaceId} projectId={projectId} members={members} />
+        <PresenceList projectId={project._id} members={members} currentUserId={user._id} />
 
-        <ul className="flex flex-col gap-3">
-          {tasks.map((task) => (
-            <li
-              key={task._id}
-              className="flex items-center justify-between gap-4 rounded-lg border border-black/10 px-4 py-3 dark:border-white/10"
-            >
-              <div>
-                <p className="font-medium">{task.title}</p>
-                {task.description && (
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">{task.description}</p>
-                )}
-              </div>
-              <TaskStatusSelect
-                workspaceId={workspaceId}
-                projectId={projectId}
-                taskId={task._id}
-                status={task.status}
-              />
-            </li>
-          ))}
-          {tasks.length === 0 && <li className="text-sm text-zinc-500">No tasks yet.</li>}
-        </ul>
+        {/* Canonical _id, not the URL slug — the store and socket events are
+            keyed by id (see DECISIONS.md), matching ProjectLiveStatus below. */}
+        <CreateTaskForm workspaceId={workspaceId} projectId={project._id} members={members} />
+
+        <TaskList workspaceId={workspaceId} projectId={project._id} initialTasks={tasks} />
 
         <ChatPanel
           workspaceId={workspaceId}
           projectId={project._id}
           currentUserId={user._id}
+          members={members}
           initialMessages={messagePage.messages}
           initialHasOlder={messagePage.hasMore}
         />

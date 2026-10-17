@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { z } from "zod";
 import { logger } from "../../utils/logger";
 import { findProjectForMember } from "../membership";
+import { addPresence, removePresence } from "../presence";
 import { projectRoom, safeAck, type IoSocket } from "../types";
 
 // Canonical ObjectIds only (no slugs) — one project must map to exactly one
@@ -14,7 +15,7 @@ export function registerProjectHandlers(socket: IoSocket): void {
   const { userId } = socket.data;
 
   socket.on("project:join", async (payload, rawAck) => {
-    const ack = safeAck(rawAck);
+    const ack = safeAck<{ onlineUserIds: string[] }>(rawAck);
     const parsed = projectPayload.safeParse(payload);
     if (!parsed.success) {
       ack({ ok: false, error: "Invalid projectId" });
@@ -31,8 +32,12 @@ export function registerProjectHandlers(socket: IoSocket): void {
       }
 
       await socket.join(projectRoom(projectId));
+      // Redis presence (Step 8): register this socket, broadcast
+      // `user:online` when it's the user's first in the room, and return the
+      // snapshot of everyone online for the UI's initial state.
+      const onlineUserIds = await addPresence(socket, projectId);
       logger.info(`socket ${socket.id} (user ${userId}) joined ${projectRoom(projectId)}`);
-      ack({ ok: true });
+      ack({ ok: true, onlineUserIds });
     } catch (err) {
       logger.error("project:join failed", err);
       ack({ ok: false, error: "Internal error" });
@@ -47,8 +52,15 @@ export function registerProjectHandlers(socket: IoSocket): void {
       ack({ ok: false, error: "Invalid projectId" });
       return;
     }
+    const { projectId } = parsed.data;
 
-    await socket.leave(projectRoom(parsed.data.projectId));
+    await socket.leave(projectRoom(projectId));
+    try {
+      await removePresence(socket, projectId);
+    } catch (err) {
+      // Leaving must never fail; a stale presence entry just expires (TTL).
+      logger.error("project:leave presence cleanup failed", err);
+    }
     ack({ ok: true });
   });
 }

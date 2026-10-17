@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoutButton } from "./LogoutButton";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import type { User } from "@/types/api";
 
 export function AppHeader({ user }: { user: User }) {
@@ -9,6 +10,7 @@ export function AppHeader({ user }: { user: User }) {
         FlowSync
       </Link>
       <div className="flex items-center gap-4 text-sm">
+        <NotificationBell />
         <span className="text-zinc-600 dark:text-zinc-400">{user.name}</span>
         <LogoutButton />
       </div>

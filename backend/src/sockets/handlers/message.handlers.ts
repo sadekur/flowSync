@@ -1,4 +1,5 @@
 import { createMessage, type MessageDto } from "../../services/message.service";
+import { notifyNewMessage } from "../../services/notification.service";
 import { sendMessageSchema } from "../../validators/message.validators";
 import { isRateLimited } from "../../utils/rateLimit";
 import { logger } from "../../utils/logger";
@@ -41,6 +42,13 @@ export function registerMessageHandlers(socket: IoSocket): void {
       // tabs) get it too; the client dedupes by _id against the ack.
       socket.nsp.to(projectRoom(projectId)).emit("message:new", message);
       ack({ ok: true, message });
+
+      // Best-effort fan-out to the other members. Runs after the ack: the
+      // message is already saved and confirmed, so a failure here must not
+      // look like a failed send.
+      notifyNewMessage(project, message, userId).catch((err) =>
+        logger.error("notifyNewMessage failed", err),
+      );
     } catch (err) {
       logger.error("message:send failed", err);
       ack({ ok: false, error: "Internal error" });
