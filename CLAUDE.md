@@ -60,7 +60,11 @@ Run from the repo root.
 
 **On Windows, `build:backend` / `typecheck:backend` need a POSIX script shell.** npm defaults to `cmd.exe` there, and those scripts then fail with `'f' is not recognized`. Run them as `npm run typecheck:backend --script-shell="$(which bash)"` from the Bash tool, or set it once with `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 
-There is no `lint:backend`, `typecheck:frontend` (use the IDE/`tsc --noEmit` via Next's own tsconfig), or test script yet — tests arrive at Step 12 (`PLANNING.md`), and `backend/tests/` is empty until then. Backend dev requires Redis running locally on port 6379 and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable. Where that Redis comes from depends on the dev machine:
+There is no `lint:backend` or `typecheck:frontend`. For the frontend (and its `*.test.tsx`), use `npx tsc --noEmit -p tsconfig.json`. `typecheck:backend` covers only `backend/src`, not `backend/tests`.
+
+**Tests never use `.env`'s database.** `backend/tests/setup/env.ts` points the backend at a local `mongodb://127.0.0.1:27017/flowsync_test` and Redis DB 15, wiping both before each test. It refuses to run against anything non-local, a database not named `*_test`, or Redis DB 0 (override with `TEST_MONGO_URI` / `TEST_REDIS_URL`). Backend tests start the real app via `backend/tests/helpers/server.ts`. Use `createFixture()` (owner + member + outsider sharing one workspace/project) and `helpers/sockets.ts` instead of hand-rolling cookies or socket headers. Frontend tests mock `socket.io-client` with `src/test/fakeSocket.ts` and `@/lib/client-api`'s `apiFetch`, around a real `makeStore()`. Under `NODE_ENV=test` (set only by that setup file), bcrypt uses cost 4.
+
+Backend dev requires Redis running locally on port 6379 and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable. Where that Redis comes from depends on the dev machine:
 - **Linux:** the `redis-server` systemd service (apt package). Check it with `systemctl is-active redis-server`, CLI `redis-cli`.
 - **Windows:** **Memurai**, a Redis-compatible Windows service that auto-starts; CLI `"C:\Program Files\Memurai\memurai-cli.exe"`. If it's missing (e.g. after a Windows reinstall), install the MSI elevated: `winget install Memurai.MemuraiDeveloper --silent` fails with installer error 1603 without admin rights.
 
