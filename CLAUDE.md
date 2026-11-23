@@ -95,8 +95,6 @@ Backend dev requires Redis running locally on port 6379 and a reachable MongoDB;
 
 Browser automation must not register or log in accounts, so check the pages that need no login directly. Leave the logged-in pass to the user and mark it pending in `PROGRESS.md`.
 
-**`README.md` prerequisites are partly out of date:** they say MongoDB runs locally (`mongod`), but dev uses Atlas (below), and they cover only the Linux Redis setup. The notes in this file are the current ones.
-
 **`MONGO_URI` in `.env` points at a remote Atlas cluster, not local `mongod`; production uses the same database.** A bare `mongosh` connects to the (empty) local instance — any inspection or cleanup of dev data must use `mongosh "$MONGO_URI"`. The Atlas DB also holds the human user's own workspaces/projects: when live-verifying a step, create throwaway users/data and delete only those afterwards.
 
 ## Architecture
