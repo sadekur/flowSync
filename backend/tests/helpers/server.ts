@@ -1,11 +1,9 @@
-import http from "node:http";
 import type { AddressInfo } from "node:net";
 import mongoose from "mongoose";
-import { createApp } from "../../src/app";
 import { connectDB, disconnectDB } from "../../src/config/db";
 import { connectRedis, disconnectRedis, redis } from "../../src/config/redis";
-import { createSocketServer } from "../../src/sockets";
 import { setIo } from "../../src/sockets/emitter";
+import { createHttpServer } from "../../src/httpServer";
 import type { IoServer } from "../../src/sockets/types";
 
 export interface TestServer {
