@@ -238,6 +238,18 @@
     - A task added from a second tab then appeared live in the first.
     - No app console errors; the only one is a hydration warning from browser extensions (ColorZilla, Grammarly) adding attributes to `<body>`.
     - Cleanup: the workspace, project and 2 tasks were deleted from Atlas, and the stale Redis cache entries (the user's workspace list, the project→workspace key) were removed.
+- [x] Email system, part 1 of 3: mailer + password reset
+  - Backend:
+    - `utils/mailer.ts` (nodemailer: Mailtrap sandbox via `SMTP_URL` in dev, Resend's SMTP relay via `RESEND_API_KEY` in production, console in dev without either, `testOutbox` in tests)
+    - `utils/emails.ts` (text + inline-styled HTML template)
+    - `models/AuthToken.ts` (sha256 only, TTL index)
+    - `POST /api/auth/forgot-password` and `POST /api/auth/reset-password` in the auth service, controller, validators and routes
+    - `APP_URL` + `appUrl` resolution in `config/env.ts`
+  - Frontend: `/forgot-password`, `/reset-password` (token read from the URL fragment, then stripped), and a "Forgot your password?" link plus a "Password updated" notice on `/login`
+  - Tests:
+    - `backend/tests/password-reset.test.ts` (9) and `components/auth/ResetPasswordForm.test.tsx` (4); `npm test` passes 132/132
+    - Mutation check in a scratch copy: a reusable token, no session sign-out, and old links staying live were each caught
+  - Docs: `docs/api/auth.md`, `.env.example`, `DECISIONS.md`
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
