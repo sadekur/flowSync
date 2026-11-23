@@ -68,7 +68,12 @@ Backend dev requires Redis running locally on port 6379 and a reachable MongoDB;
 - **Linux:** the `redis-server` systemd service (apt package). Check it with `systemctl is-active redis-server`, CLI `redis-cli`.
 - **Windows:** **Memurai**, a Redis-compatible Windows service that auto-starts; CLI `"C:\Program Files\Memurai\memurai-cli.exe"`. If it's missing (e.g. after a Windows reinstall), install the MSI elevated: `winget install Memurai.MemuraiDeveloper --silent` fails with installer error 1603 without admin rights.
 
-**How steps are verified live (no test runner yet):** with curl for REST, and with throwaway scripted `socket.io-client` runs for socket events, both against the real backend. Prefix test users with something like `s7test-` so cleanup can match them exactly. Browser automation must not register or log in accounts, so the browser UI check for a step is left to the user and marked pending in `PROGRESS.md`.
+**How a step is verified:**
+- `npm test`. Add tests for new behaviour alongside the code.
+- Where it matters, a live run against the real dev backend (curl / scripted `socket.io-client`). Prefix throwaway users with something like `s7test-` so cleanup can match them exactly.
+- A **browser check after every implementation** (the user's standing request), at least confirming the app still loads with no new console errors.
+
+Browser automation must not register or log in accounts, so check the pages that need no login directly. Leave the logged-in pass to the user and mark it pending in `PROGRESS.md`.
 
 **`README.md` prerequisites are partly out of date:** they say MongoDB runs locally (`mongod`), but dev uses Atlas (below), and they cover only the Linux Redis setup. The notes in this file are the current ones.
 
