@@ -38,19 +38,15 @@ const envSchema = z.object({
     .optional()
     .transform((value) => value || undefined)
     .pipe(z.string().url("APP_URL must be a valid URL").optional()),
-  // Outgoing mail. SMTP_URL (e.g. Mailtrap's sandbox in dev) wins; otherwise
-  // RESEND_API_KEY (set by the Vercel Marketplace integration) goes through
-  // Resend's SMTP relay. With neither, dev prints emails to the console.
+  // Outgoing mail over SMTP: Mailtrap's sandbox in dev, Brevo in production.
+  // Unset: dev prints emails to the console, production refuses to send.
   SMTP_URL: z
     .string()
     .optional()
     .transform((value) => value || undefined),
-  RESEND_API_KEY: z
-    .string()
-    .optional()
-    .transform((value) => value || undefined),
-  // Without a verified domain, Resend only sends from onboarding@resend.dev.
-  MAIL_FROM: z.string().min(1).default("FlowSync <onboarding@resend.dev>"),
+  // Brevo only sends from a sender address verified in its dashboard, so
+  // production must set this to that address. Mailtrap accepts anything.
+  MAIL_FROM: z.string().min(1).default("FlowSync <no-reply@flowsync.test>"),
   // Vercel system variables (set by the platform, not by us).
   VERCEL_ENV: z.string().optional(),
   VERCEL_URL: z.string().optional(),
