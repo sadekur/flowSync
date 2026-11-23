@@ -49,9 +49,13 @@ describe("ResetPasswordForm", () => {
 
   it("keeps the token when the effect runs twice (React Strict Mode, as in dev)", async () => {
     window.history.replaceState(null, "", "/reset-password#token=strict-token");
-    renderWithStore(
+    // StrictMode outermost, as Next.js wraps the app: only then does React
+    // run the effect twice (StrictMode nested inside <Provider> didn't).
+    render(
       <StrictMode>
-        <ResetPasswordForm />
+        <Provider store={makeStore()}>
+          <ResetPasswordForm />
+        </Provider>
       </StrictMode>,
     );
     await screen.findByLabelText("New password");
