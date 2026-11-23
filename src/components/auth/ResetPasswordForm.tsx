@@ -25,10 +25,16 @@ export function ResetPasswordForm() {
 
   useEffect(() => {
     const found = readTokenFromHash();
-    // Drop the token from the address bar and history once it's in memory.
-    if (found) window.history.replaceState(null, "", window.location.pathname);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- the fragment only exists in the browser
-    setToken(found);
+    if (found) {
+      // Drop the token from the address bar and history once it's in memory.
+      window.history.replaceState(null, "", window.location.pathname);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the fragment only exists in the browser
+      setToken(found);
+    } else {
+      // Keep a token an earlier run already took: Strict Mode runs this
+      // effect twice in dev, and the second run finds the hash gone.
+      setToken((current) => current ?? null);
+    }
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
