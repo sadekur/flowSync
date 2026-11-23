@@ -36,8 +36,17 @@ flowSync/
 ├── backend/tests/               # Vitest: setup/env.ts (test DB guard), helpers/ (server, api client, sockets), *.test.ts
 ├── src/test/                    # frontend test helpers: fakeSocket.ts, factories.ts, render.tsx (component tests sit next to the code as *.test.tsx)
 ├── vitest.config.mts            # two projects: backend (node, files serial) + frontend (jsdom)
+├── vercel.json                  # Vercel Services: `web` (Next.js) + `api` (Express, entry backend/src/vercel.ts), both root "."
+├── Dockerfile, docker-compose.yml, deploy/   # self-hosting: one image, Nginx (TLS + headers) in front, Mongo, Redis
 └── docs/api/                    # one .md per REST endpoint
 ```
+
+**The backend has three entry points, all built on `createHttpServer()` (`backend/src/httpServer.ts`), so they wire the app identically:**
+- `server.ts` connects, then listens on `PORT`. Used by dev, `start:backend` and Docker.
+- `vercel.ts` exports the `http.Server` for Vercel Functions and connects at module load.
+- `backend/tests/helpers/server.ts` is the test harness.
+
+Change the wiring in `httpServer.ts`, not in an entry.
 
 `backend/` has **no `tsconfig.json`, no `package.json`**. `npm run build:backend` / `typecheck:backend` invoke `tsc` directly with compiler options as CLI flags, against a file list from `find backend/src -name '*.ts'` (see `package.json` scripts) — `find` is used instead of a shell glob because the POSIX `sh` npm scripts run under doesn't support `**`.
 
