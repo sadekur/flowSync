@@ -16,6 +16,7 @@ export function makeUser(name: string, overrides: Partial<User> = {}): User {
     name,
     email: `${name.toLowerCase()}@example.com`,
     tokenVersion: 0,
+    emailVerifiedAt: "2026-01-01T00:00:00.000Z",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
