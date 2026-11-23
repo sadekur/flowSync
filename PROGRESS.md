@@ -260,7 +260,8 @@
       - Strict Mode wiping the token
       - the hash strip being undone during router startup
     - Cleanup: the user and its rate-limit keys were deleted.
-  - Not yet done: a real send through Mailtrap (`SMTP_URL` not in `.env` yet) and through Resend in production (terms not accepted yet)
+  - **Real send through Mailtrap verified.** A throwaway `s14test-mailtrap` user requested a reset on the dev backend. The email arrived in the Mailtrap sandbox with the expected HTML (button, backup link with the `#token=` fragment, expiry note). The user was then deleted.
+  - **Not done yet: production email through Brevo.** It waits for the user's Brevo account, verified sender and SMTP key (switched from Resend, whose Marketplace install requires an owned domain).
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
