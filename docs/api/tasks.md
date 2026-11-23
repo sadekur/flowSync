@@ -27,7 +27,7 @@ Body: `{ "title": string, "description"?: string, "status"?: TaskStatus, "assign
 
 ## `PATCH /api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId`
 
-Same body shape as create, all fields optional. **200** `{ "task": {...} }` · **400** assignee not a workspace member.
+Same body shape as create, all fields optional: fields that aren't sent are left unchanged (in particular, `status` is not reset to `"todo"` — the create default doesn't apply here). **200** `{ "task": {...} }` · **400** assignee not a workspace member, or invalid field.
 
 ## `DELETE /api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId`
 
