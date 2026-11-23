@@ -62,6 +62,49 @@ describe("tasksSlice", () => {
     store.dispatch(taskRemoved({ projectId: OTHER_PROJECT, taskId: older._id }));
     expect(selectAllTasks(store.getState()).map((t) => t.title)).toEqual(["older"]);
   });
+
+  it("drops tasks the catch-up fetch no longer has (deleted while out of the room)", () => {
+    const store = makeStore();
+    const kept = makeTask("kept");
+    const gone = makeTask("deleted while offline");
+    store.dispatch(tasksHydrated({ projectId: PROJECT_ID, tasks: [kept, gone] }));
+
+    store.dispatch(tasksSyncStarted({ projectId: PROJECT_ID }));
+    store.dispatch(tasksSynced({ projectId: PROJECT_ID, tasks: [{ ...kept, status: "done" }] }));
+    expect(selectAllTasks(store.getState()).map((t) => [t.title, t.status])).toEqual([["kept", "done"]]);
+    expect(store.getState().tasks.syncTouched).toBeNull();
+  });
+
+  it("keeps live events that land while the catch-up fetch is in flight", () => {
+    const store = makeStore();
+    const edited = makeTask("edited live");
+    const deleted = makeTask("deleted live");
+    store.dispatch(tasksHydrated({ projectId: PROJECT_ID, tasks: [edited, deleted] }));
+
+    store.dispatch(tasksSyncStarted({ projectId: PROJECT_ID }));
+    // The fetch was served before these events, so its copy is stale.
+    const created = makeTask("created live");
+    store.dispatch(taskUpserted({ projectId: PROJECT_ID, task: created }));
+    store.dispatch(taskUpserted({ projectId: PROJECT_ID, task: { ...edited, status: "done" } }));
+    store.dispatch(taskRemoved({ projectId: PROJECT_ID, taskId: deleted._id }));
+    store.dispatch(tasksSynced({ projectId: PROJECT_ID, tasks: [edited, deleted] }));
+
+    expect(selectAllTasks(store.getState()).map((t) => [t.title, t.status])).toEqual([
+      ["created live", "todo"],
+      ["edited live", "done"],
+    ]);
+  });
+
+  it("ignores a catch-up result for another project, or with no catch-up running", () => {
+    const store = makeStore();
+    const task = makeTask("stays");
+    store.dispatch(tasksHydrated({ projectId: PROJECT_ID, tasks: [task] }));
+
+    store.dispatch(tasksSynced({ projectId: PROJECT_ID, tasks: [] }));
+    store.dispatch(tasksSyncStarted({ projectId: PROJECT_ID }));
+    store.dispatch(tasksSynced({ projectId: OTHER_PROJECT, tasks: [] }));
+    expect(selectAllTasks(store.getState()).map((t) => t.title)).toEqual(["stays"]);
+  });
 });
 
 describe("presenceSlice", () => {
