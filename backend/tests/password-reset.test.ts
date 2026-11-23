@@ -86,8 +86,8 @@ describe("POST /api/auth/reset-password", () => {
     const token = tokenFromOutbox(alice.email);
 
     // Alice's other session (another device), from before the reset.
-    const otherDevice = (await login(alice, alice.password)).status === 200 ? new TestClient(server.url) : null;
-    await otherDevice?.post("/api/auth/login", { email: alice.email, password: alice.password });
+    const otherDevice = anonymous();
+    expect((await otherDevice.post("/api/auth/login", { email: alice.email, password: alice.password })).status).toBe(200);
 
     // Reset from the browser she's logged in on: its cookies are cleared.
     const res = await alice.client.post("/api/auth/reset-password", { token, password: "brand-new-pass" });
