@@ -245,9 +245,9 @@
     - `models/AuthToken.ts` (sha256 only, TTL index)
     - `POST /api/auth/forgot-password` and `POST /api/auth/reset-password` in the auth service, controller, validators and routes
     - `APP_URL` + `appUrl` resolution in `config/env.ts`
-  - Frontend: `/forgot-password`, `/reset-password` (token read from the URL fragment, then stripped), and a "Forgot your password?" link plus a "Password updated" notice on `/login`
+  - Frontend: `/forgot-password`, `/reset-password` (token read from the URL fragment, then stripped), a "Forgot your password?" link plus a "Password updated" notice on `/login`, and a show/hide toggle on every password field (`PasswordInput`, user request)
   - Tests:
-    - `backend/tests/password-reset.test.ts` (10) and `components/auth/ResetPasswordForm.test.tsx` (4); `npm test` passes 133/133
+    - `backend/tests/password-reset.test.ts` (10), `components/auth/ResetPasswordForm.test.tsx` (5, including a Strict Mode regression) and `PasswordInput.test.tsx` (2); `npm test` passes 136/136
     - Mutation check in a scratch copy: a reusable token, no session sign-out, and old links staying live were each caught
   - Docs: `docs/api/auth.md`, `.env.example`, `DECISIONS.md`
 - [ ] Pending for the user:
