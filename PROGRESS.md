@@ -240,7 +240,7 @@
     - Cleanup: the workspace, project and 2 tasks were deleted from Atlas, and the stale Redis cache entries (the user's workspace list, the project→workspace key) were removed.
 - [x] Email system, part 1 of 3: mailer + password reset
   - Backend:
-    - `utils/mailer.ts` (nodemailer: Mailtrap sandbox via `SMTP_URL` in dev, Resend's SMTP relay via `RESEND_API_KEY` in production, console in dev without either, `testOutbox` in tests)
+    - `utils/mailer.ts` (nodemailer over `SMTP_URL`: Mailtrap sandbox in dev, Brevo in production; console in dev without it, `testOutbox` in tests)
     - `utils/emails.ts` (text + inline-styled HTML template)
     - `models/AuthToken.ts` (sha256 only, TTL index)
     - `POST /api/auth/forgot-password` and `POST /api/auth/reset-password` in the auth service, controller, validators and routes
