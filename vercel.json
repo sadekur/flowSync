@@ -3,6 +3,12 @@
   "regions": [
     "bom1"
   ],
+  "git": {
+    "deploymentEnabled": {
+      "**": false,
+      "release": true
+    }
+  },
   "services": {
     "web": {
       "root": ".",
