@@ -12,6 +12,32 @@ import { registerTypingHandlers } from "./handlers/typing.handlers";
 import { removePresenceFromAllRooms } from "./presence";
 import { userRoom, type IoServer } from "./types";
 
+/**
+ * The frontend's Origin is either CORS_ORIGIN (dev: Next on :3000, API on
+ * :4000) or the API's own origin (same-origin deploys: Vercel services and
+ * Docker+Nginx serve both from one host, and every Vercel preview has its own
+ * host, so no fixed value could list them).
+ *
+ * Same-origin is judged against the host the request was sent to. A browser
+ * can't forge either side of that comparison on a WebSocket handshake — it
+ * sets Origin and Host itself, and page JS can't add headers to the upgrade —
+ * so a page on another site always fails it. `x-forwarded-host` is the public
+ * host when a proxy (Vercel, Nginx) sits in front.
+ */
+export function isAllowedOrigin(origin: string | undefined, headers: http.IncomingHttpHeaders): boolean {
+  if (!origin) return false;
+  if (origin === env.CORS_ORIGIN) return true;
+
+  const forwarded = headers["x-forwarded-host"];
+  const host = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim() || headers.host;
+  if (!host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 export function createSocketServer(httpServer: http.Server): IoServer {
   const io: IoServer = new Server(httpServer, {
     // Only governs the HTTP long-polling transport — browsers don't apply
