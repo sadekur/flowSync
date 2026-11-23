@@ -33,10 +33,13 @@ afterEach(() => {
 });
 
 describe("connection and rooms", () => {
-  it("connects with credentials once, however often socketConnect is dispatched", () => {
+  it("connects with credentials over WebSocket only, once, however often socketConnect is dispatched", () => {
     store.dispatch(socketConnect());
     const socket = latestSocket();
-    expect(socket.options).toMatchObject({ withCredentials: true, autoConnect: false });
+    // WebSocket only: Vercel Functions can't serve Socket.IO's long-polling.
+    expect(socket.options).toMatchObject({ withCredentials: true, autoConnect: false, transports: ["websocket"] });
+    // No NEXT_PUBLIC_SOCKET_URL in tests → undefined → the page's own origin.
+    expect(socket.url).toBeUndefined();
     expect(socket.active).toBe(true);
     store.dispatch(socketConnect());
     expect(latestSocket()).toBe(socket);
