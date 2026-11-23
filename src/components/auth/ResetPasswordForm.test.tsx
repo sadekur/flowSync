@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { makeStore } from "@/store";
 import userEvent from "@testing-library/user-event";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { apiFetch, ApiError } from "@/lib/client-api";
