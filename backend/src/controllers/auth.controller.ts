@@ -42,6 +42,21 @@ export async function logout(_req: Request, res: Response): Promise<void> {
   res.status(204).send();
 }
 
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  const { email } = forgotPasswordSchema.parse(req.body);
+  await authService.requestPasswordReset(email);
+  res.status(200).json({ message: "If an account exists for that email, a reset link is on its way." });
+}
+
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  const input = resetPasswordSchema.parse(req.body);
+  await authService.resetPassword(input);
+  // Every session for that account was just invalidated; drop this browser's
+  // cookies too so it doesn't hold on to a dead refresh token.
+  clearAuthCookies(res);
+  res.status(200).json({ message: "Password updated. Log in with your new password." });
+}
+
 export async function me(req: Request, res: Response): Promise<void> {
   const user = await authService.getProfile(req.userId as string);
   res.status(200).json({ user });
