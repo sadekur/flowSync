@@ -203,13 +203,14 @@ describe("socketMiddleware against the real server", () => {
 
     dropConnections(f.member.id);
     await vi.waitFor(() => expect(statuses).toContain("reconnecting"));
-    // The room is gone with the connection, so the UI must stop claiming "live"…
-    // …until the middleware's own re-join is acked.
     await vi.waitFor(() => {
       expect(store.getState().socket.status).toBe("connected");
       expect(store.getState().socket.joinedProjectId).toBe(projectId);
     });
     expect(statuses).toEqual(["idle", "connecting", "connected", "reconnecting", "connected"]);
+    // The room is gone with the connection, so the UI stopped claiming "live"
+    // (null) until the middleware's own re-join was acked.
+    expect(joins).toEqual([null, projectId, null, projectId]);
 
     // Proof the room really was re-joined server-side: live chat and task
     // events reach the store.
