@@ -147,4 +147,6 @@ Relayed `typing:start`/`typing:stop` events, excluding the sender. Clients show 
 
 Every event in this document works across backend instances. The server uses `@socket.io/redis-adapter`, so a broadcast to `project:{id}` or `user:{id}` from any instance (a socket handler or the REST task layer) reaches sockets connected to every other instance. Presence counts, rate limits and the membership cache are in the same shared Redis, so they agree across instances too.
 
-The client doesn't change. Each connection is still served by one instance for its whole life, and a reconnect may land on a different one, which the auto re-join already handles. Behind a load balancer, the HTTP long-polling transport needs sticky sessions (Step 13's Nginx config); WebSocket-only connections don't.
+The client doesn't change. Each connection is still served by one instance for its whole life, and a reconnect may land on a different one, which the auto re-join already handles. The client is WebSocket-only (Step 13), so no sticky sessions are needed behind Nginx or on Vercel. Only the long-polling transport would need them.
+
+**On Vercel**, a socket also closes when its function instance reaches its maximum duration (300 s on Hobby). The client treats that like any dropped connection: it reconnects, re-joins and catches up. That path is covered by `backend/tests/reconnect.test.ts`.
