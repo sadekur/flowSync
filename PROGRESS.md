@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 11 (Redis at scale) complete and verified live with two backend instances on one Redis (30/30). The per-event socket membership check, workspace member lists and the dashboard's workspace list are served cache-aside from Redis with invalidation on every write. Socket.IO uses the Redis adapter, so chat, typing, presence, task and notification events reach clients on any instance. Backend-only: no frontend changes.
+Step 12 (Testing) complete: `npm test` runs 113 Vitest tests (~30 s) — REST integration and Socket.IO tests against a real backend on a local throwaway Mongo database + Redis DB, reconnect tests (including the real Redux store's `socketMiddleware` against that server), and frontend slice/middleware/component tests in jsdom. Writing them found and fixed one real bug: a `PATCH` that didn't send `status` reset the task to `"todo"`. Browser check of the logged-in pages is pending for the user (see Step 12 below).
 
 ## Completed
 
