@@ -140,6 +140,7 @@ export async function resetPassword(input: ResetPasswordInput): Promise<string> 
   if (!user) {
     throw new ApiError(400, "This reset link is invalid or has expired. Request a new one.");
   }
+  return user.id;
 }
 
 export async function getProfile(userId: string): Promise<UserDocument> {
