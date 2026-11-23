@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 13 (Deployment) in progress, targeting Vercel at the user's choice (one project, two services). The code is ready and the local `vercel build --prod` passes. The first deploy is waiting on three user actions: accept the Redis Marketplace terms, rotate the Atlas password and open Atlas network access, and add `MONGO_URI` to Vercel (see Step 13 below). Docker Compose + Nginx files for self-hosting are written but not run, because Docker isn't installed on this machine. Step 12: 115 tests, and the logged-in browser pass is still pending for the user.
+**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 115/115. Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
 
 ## Completed
 
@@ -180,7 +180,7 @@ Step 13 (Deployment) in progress, targeting Vercel at the user's choice (one pro
   - `.env.example` had the real Atlas URI (user and password) and the real JWT secrets, and `sadekur/flowSync` is public. It now has placeholders (`433b91e`). `.env` was never committed.
   - The local `.env` JWT secrets were rotated (128 hex chars each). Everyone is logged out once.
   - **User action still needed:** change the Atlas database user's password. The old one stays in the public git history, and only rotating it closes the hole.
-- [ ] Step 13: Deployment, on **Vercel, one project** (user's choice, over the plan's Docker-only version), plus Docker Compose for self-hosting
+- [x] Step 13: Deployment, on **Vercel, one project** (user's choice, over the plan's Docker-only version), plus Docker Compose for self-hosting
   - Same-origin deploy, done in code. The browser talks to one origin, which routes `/api/*` and `/socket.io/*` to the backend:
     - `client-api.ts` and `socketMiddleware` use relative URLs when `NEXT_PUBLIC_*` is unset.
     - `server-fetch.ts` uses `BACKEND_INTERNAL_URL` (service binding / compose network).
@@ -204,11 +204,31 @@ Step 13 (Deployment) in progress, targeting Vercel at the user's choice (one pro
   - The local `npx vercel@65.12.1 build --prod` succeeds for both services, so the shared root `"."` works
   - The dev backend still runs on the new code and `.env` (health ok)
   - Compose YAML parses
-- [ ] Pending:
-  - Redis provisioning. The user must accept the Marketplace terms first, then run `vercel integration add redis --name flowsync-redis --meta Region=iad1`.
-  - `MONGO_URI` in Vercel. The user adds it after rotating the Atlas password and allowing `0.0.0.0/0` in Atlas Network Access, which Vercel's dynamic IPs need.
-  - First production deploy, then live verification and adding the URL to the profile README.
+- [x] Deploy:
+  - **Redis: Upstash for Redis, free plan.** The official Redis integration had no free plan left on the team, so the user chose Upstash. It sets `REDIS_URL` (TLS, TCP pub/sub) plus Upstash's REST variables, which are unused.
+  - `MONGO_URI` was added by the user as a Secret (production), after rotating the Atlas password and allowing `0.0.0.0/0` in Network Access. Preview has no `MONGO_URI` yet.
+  - `.vercelignore` keeps `.env*`, TLS keys and build output out of CLI uploads.
+  - **Region:** the first deploy was in `iad1`, but Atlas turned out to be in Mumbai (`mtm-gcp-ass1-…`, GCP asia-south1). With the user's OK, the empty `iad1` Upstash database was deleted, a new one created in `bom1`, and the functions pinned with `"regions": ["bom1"]`. `vercel inspect` shows every function in `[bom1]`.
+  - **Startup fix found in production logs:** `vercel.ts` built the server before connecting. The Redis adapter's subscribe made ioredis start connecting on its own, so the explicit `connect()` was rejected ("Redis is already connecting/connected") on every cold start. Connections now start first, and a local load of the real entry shows 0 startup errors.
+  - **Health fix:** a cold instance's Mongo connect only progresses while a request is in flight, so `/api/health` reported `disconnected` for ~25 s. Real routes never were (Mongoose buffers their queries). Health now waits up to 5 s for a connection that is still opening, as the Redis `PING` already did. A fresh instance's first request now returns `ok` in 0.54 s.
+- [x] Verified live (production, `https://flowsync-eight.vercel.app`):
+  - `/api/health` ok, with Mongo and Redis connected
+  - `/` and `/dashboard` redirect to `/login` when logged out
+  - Helmet CSP and HSTS present on the API
+  - Socket handshake without Origin → 403
+  - Scripted run with throwaway `s13test-*` users, 18/18: register; auth cookie HttpOnly + Secure + SameSite=Strict with no Domain; `/auth/me`; workspace + member + project; SSR `/dashboard` (web → api binding) showing the workspace; sockets rejected without a cookie or with a foreign Origin; both sockets on WebSocket, same-origin; join snapshot; `user:online`; `typing:start` relay; `message:send` ack + `message:new` to the peer; `notification:new` to the user room; REST task create → `task:created`; reconnect catch-up via `?after=`; CSRF refusal; workspace delete cascade
+  - Cleanup: both `s13test-*` users deleted from Atlas by exact prefix (2 matched, 0 left over). The user's own data was untouched.
+  - Browser: production `/register` renders with no console errors, and `/api/health` reads ok
+  - Profile README (`sadekur/sadekur`) now links the live demo
+- [ ] Pending for the user:
+  - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
+  - Optionally, `MONGO_URI` for the preview environment
+  - Running `docker compose up` once Docker is installed
 
 ## Next Steps
 
-1. Finish Step 13: the user actions above, then deploy and verify live.
+All 13 build steps in `PLANNING.md` are done. Post-MVP candidates (not started):
+- a nonce-based CSP for the Next.js pages (`proxy.ts`)
+- `MONGO_URI` for previews
+- verifying the Docker Compose setup on a machine with Docker
+- the post-MVP features listed in `PLANNING.md` (file uploads, …)

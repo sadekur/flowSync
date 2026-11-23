@@ -76,7 +76,7 @@ There is no `lint:backend` or `typecheck:frontend`. For the frontend (and its `*
 - `vercel build --prod` reproduces the cloud build locally, and is the quickest check that `vercel.json` and the API entry still bundle.
 - Then deploy with `vercel deploy --prod`.
 
-Vercel's builder type-checks from the entry file, so any global `.d.ts` must be reachable from it (see the `/// <reference>` in `app.ts`). Production env vars live in Vercel (`vercel env ls`): `MONGO_URI`, `REDIS_URL` (Redis Marketplace integration), and the JWT secrets as Secrets. `CORS_ORIGIN`, `COOKIE_DOMAIN` and `NEXT_PUBLIC_*` stay **unset** there: the deploy is same-origin.
+Vercel's builder type-checks from the entry file, so any global `.d.ts` must be reachable from it (see the `/// <reference>` in `app.ts`). Production is live at https://flowsync-eight.vercel.app, with everything pinned to `bom1` (Mumbai) via `"regions"`. That's next to the Atlas M0 (GCP Mumbai) and the Upstash Redis; keep new resources in that region. Production env vars live in Vercel (`vercel env ls`): `MONGO_URI` (set by the user; preview has none yet), `REDIS_URL` (Upstash Marketplace integration, free plan), and the JWT secrets as Secrets. `CORS_ORIGIN`, `COOKIE_DOMAIN` and `NEXT_PUBLIC_*` stay **unset** there: the deploy is same-origin.
 
 **Tests never use `.env`'s database.** `backend/tests/setup/env.ts` points the backend at a local `mongodb://127.0.0.1:27017/flowsync_test` and Redis DB 15, wiping both before each test. It refuses to run against anything non-local, a database not named `*_test`, or Redis DB 0 (override with `TEST_MONGO_URI` / `TEST_REDIS_URL`). Backend tests start the real app via `backend/tests/helpers/server.ts`. Use `createFixture()` (owner + member + outsider sharing one workspace/project) and `helpers/sockets.ts` instead of hand-rolling cookies or socket headers. Frontend tests mock `socket.io-client` with `src/test/fakeSocket.ts` and `@/lib/client-api`'s `apiFetch`, around a real `makeStore()`. Under `NODE_ENV=test` (set only by that setup file), bcrypt uses cost 4.
 
@@ -93,7 +93,7 @@ Browser automation must not register or log in accounts, so check the pages that
 
 **`README.md` prerequisites are partly out of date:** they say MongoDB runs locally (`mongod`), but dev uses Atlas (below), and they cover only the Linux Redis setup. The notes in this file are the current ones.
 
-**`MONGO_URI` in `.env` points at a remote Atlas cluster, not local `mongod`.** A bare `mongosh` connects to the (empty) local instance — any inspection or cleanup of dev data must use `mongosh "$MONGO_URI"`. The Atlas DB also holds the human user's own workspaces/projects: when live-verifying a step, create throwaway users/data and delete only those afterwards.
+**`MONGO_URI` in `.env` points at a remote Atlas cluster, not local `mongod`; production uses the same database.** A bare `mongosh` connects to the (empty) local instance — any inspection or cleanup of dev data must use `mongosh "$MONGO_URI"`. The Atlas DB also holds the human user's own workspaces/projects: when live-verifying a step, create throwaway users/data and delete only those afterwards.
 
 ## Architecture
 
