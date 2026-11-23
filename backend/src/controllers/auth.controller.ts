@@ -6,7 +6,8 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from "../validators/auth.validators";
-import { clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from "../utils/cookies";
+import { ACCESS_COOKIE, clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from "../utils/cookies";
+import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
 import { ApiError } from "../middleware/errorHandler";
 
 export async function register(req: Request, res: Response): Promise<void> {
