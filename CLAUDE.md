@@ -62,7 +62,7 @@ There is no `lint:backend`, `typecheck:frontend` (use the IDE/`tsc --noEmit` via
 
 **How steps are verified live (no test runner yet):** with curl for REST, and with throwaway scripted `socket.io-client` runs for socket events, both against the real backend. Prefix test users with something like `s7test-` so cleanup can match them exactly. Browser automation must not register or log in accounts, so the browser UI check for a step is left to the user and marked pending in `PROGRESS.md`.
 
-**`README.md` prerequisites are out of date** (they mention local `mongod` and `apt install redis-server`). The notes in this file are the current ones.
+**`README.md` prerequisites are partly out of date:** they say MongoDB runs locally (`mongod`), but dev uses Atlas (below), and they cover only the Linux Redis setup. The notes in this file are the current ones.
 
 **`MONGO_URI` in `.env` points at a remote Atlas cluster, not local `mongod`.** A bare `mongosh` connects to the (empty) local instance — any inspection or cleanup of dev data must use `mongosh "$MONGO_URI"`. The Atlas DB also holds the human user's own workspaces/projects: when live-verifying a step, create throwaway users/data and delete only those afterwards.
 
