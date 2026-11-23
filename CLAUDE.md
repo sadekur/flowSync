@@ -16,6 +16,8 @@ Read these before making non-trivial changes:
 
 When you complete a step or make an architectural/security decision, update `PROGRESS.md` and `DECISIONS.md` accordingly, and add an API doc under `docs/api/` for any new endpoint — this is the established pattern, not optional cleanup.
 
+A terse kickoff like "start" means: begin the next step listed under "Next Steps" in `PROGRESS.md`, and work out the plan for it from `PLANNING.md`. Before starting a new step, check that `docs/api/` still matches the implementation (routes, controllers, validators, services, middleware, socket handlers) and fix any drift first.
+
 ## Repo layout
 
 Flat single-package repo — the Next.js app *is* the repo root, not a `frontend/` subfolder (Next.js requires its config co-located with the app).
