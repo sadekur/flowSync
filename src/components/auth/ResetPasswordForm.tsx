@@ -34,12 +34,16 @@ export function ResetPasswordForm() {
       return;
     }
     setToken(found);
-    // Drop the token from the address bar once it's in memory. Through the
-    // Next.js router, not window.history directly: the router rewrites the URL
-    // from its own state on every update, and during startup that put a
-    // directly-stripped hash straight back.
-    router.replace(window.location.pathname, { scroll: false });
-  }, [router]);
+  }, []);
+
+  // Drop the token from the address bar once it's in memory, on the first
+  // focus into the form. Not on mount: the Next.js router rewrites the URL
+  // from its own state while it starts up, and in the browser that put a
+  // stripped hash straight back (both via window.history and router.replace).
+  // Once the page is interactive the router has settled.
+  function stripTokenFromUrl(): void {
+    if (window.location.hash) router.replace(window.location.pathname, { scroll: false });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -80,7 +84,7 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
+    <form onSubmit={handleSubmit} onFocus={stripTokenFromUrl} className="flex w-full max-w-sm flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-sm font-medium">
           New password
