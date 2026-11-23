@@ -34,12 +34,12 @@ export function ResetPasswordForm() {
       return;
     }
     setToken(found);
-    // Drop the token from the address bar once it's in memory. Deferred a
-    // tick: on first load the Next.js router syncs history in its own mount
-    // effect, which runs after this one and would write the hash back.
-    const strip = setTimeout(() => window.history.replaceState(null, "", window.location.pathname), 0);
-    return () => clearTimeout(strip);
-  }, []);
+    // Drop the token from the address bar once it's in memory. Through the
+    // Next.js router, not window.history directly: the router rewrites the URL
+    // from its own state on every update, and during startup that put a
+    // directly-stripped hash straight back.
+    router.replace(window.location.pathname, { scroll: false });
+  }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
