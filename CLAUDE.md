@@ -136,6 +136,8 @@ zod `safeParse` the payload → `isRateLimited(key, limit, windowSeconds)` (`uti
 - **Server Components** read via `src/lib/server-fetch.ts` / `src/lib/session.ts`, which forward the incoming request's cookies to the Express API.
 - **Client Components** call `apiFetch` in `src/lib/client-api.ts`: talks to `NEXT_PUBLIC_API_URL` directly with `credentials: "include"` and copies the `csrfToken` cookie into `X-CSRF-Token` on every non-GET — the client side of the double-submit check in `backend/src/middleware/csrf.ts`. After a mutation, pages refresh via `router.refresh()`.
 - Redux store is created per request via `makeStore()` (`src/store/index.ts`), never a module singleton — a singleton would leak one user's state to another in the shared Next.js server process.
+- **Dev is cross-origin, deploys are same-origin.** In dev, Next runs on :3000 and the API on :4000, using `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_SOCKET_URL`, `CORS_ORIGIN` and `COOKIE_DOMAIN=localhost`. On Vercel and docker-compose, one origin routes `/api` and `/socket.io` to the backend. There, all four are unset, the browser calls relative URLs, and cookies are host-only. Server Components still need an absolute URL, so `server-fetch.ts` uses `BACKEND_INTERNAL_URL` (the Vercel service binding or `http://api:4000`), falling back to `NEXT_PUBLIC_API_URL`. The socket Origin check (`isAllowedOrigin`) accepts `CORS_ORIGIN` *or* same-origin.
+- The Socket.IO client is **WebSocket-only** (`transports: ["websocket"]`), because Vercel Functions can't serve long-polling. On Vercel, sockets also drop at the function's max duration, and the reconnect / re-join / catch-up path handles it.
 
 ### Security model (enforced incrementally as each piece is built — see `DECISIONS.md` for full rationale)
 
