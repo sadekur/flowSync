@@ -34,16 +34,17 @@ export function TaskList({
     dispatch(tasksHydrated({ projectId, tasks: initialTasks }));
   }, [dispatch, projectId, initialTasks]);
 
-  // Catch-up on every (re)join: covers task changes made between the server
-  // render and the join, or while this tab was disconnected. Live events only
-  // cover time spent in the room.
+  // Catch-up on every (re)join: covers task changes (deletions included) made
+  // between the server render and the join, or while this tab was
+  // disconnected. Live events only cover time spent in the room.
   useEffect(() => {
     if (!inRoom) return;
     let cancelled = false;
 
+    dispatch(tasksSyncStarted({ projectId }));
     apiFetch<{ tasks: Task[] }>(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`)
       .then((res) => {
-        if (!cancelled) dispatch(tasksHydrated({ projectId, tasks: res.tasks }));
+        if (!cancelled) dispatch(tasksSynced({ projectId, tasks: res.tasks }));
       })
       .catch(() => {});
 
