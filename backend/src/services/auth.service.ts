@@ -8,7 +8,8 @@ import { appUrl, env } from "../config/env";
 import { AuthToken } from "../models/AuthToken";
 import { isRateLimited } from "../utils/rateLimit";
 import { sendMail } from "../utils/mailer";
-import { passwordResetEmail } from "../utils/emails";
+import { passwordResetEmail, verifyEmailEmail } from "../utils/emails";
+import type { AuthTokenPurpose } from "../models/AuthToken";
 import { logger } from "../utils/logger";
 
 // 12 everywhere real. The test suite registers a few users per test, and
@@ -43,6 +44,14 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
 
   const passwordHash = await bcrypt.hash(input.password, PASSWORD_SALT_ROUNDS);
   const user = await User.create({ name: input.name, email: input.email, passwordHash });
+
+  try {
+    await sendVerificationEmail(user);
+  } catch (err) {
+    // The account is created either way; the banner's resend button is the
+    // retry.
+    logger.error("Verification email failed to send", err);
+  }
 
   return { user, tokens: issueTokens(user) };
 }
@@ -83,6 +92,23 @@ function hashToken(token: string): string {
 }
 
 /**
+ * Creates a single-use token for `purpose` and returns the raw value to email.
+ * One live token per user and purpose: a new one retires the previous one.
+ */
+async function issueEmailedToken(userId: UserDocument["_id"], purpose: AuthTokenPurpose, ttlMs: number): Promise<string> {
+  const token = crypto.randomBytes(32).toString("base64url");
+  await AuthToken.deleteMany({ user: userId, purpose });
+  await AuthToken.create({ user: userId, purpose, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + ttlMs) });
+  return token;
+}
+
+/** Atomically redeems a token (two racing requests can't both succeed). Returns its user id, or null. */
+async function redeemEmailedToken(token: string, purpose: AuthTokenPurpose) {
+  const doc = await AuthToken.findOneAndDelete({ tokenHash: hashToken(token), purpose, expiresAt: { $gt: new Date() } });
+  return doc?.user ?? null;
+}
+
+/**
  * Emails a single-use reset link if an account exists. The caller answers the
  * same way either way. (Registration's 409 already reveals whether an email is
  * taken, so this doesn't try to hide the extra time a real send takes.)
@@ -99,15 +125,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
     return;
   }
 
-  const token = crypto.randomBytes(32).toString("base64url");
-  // One live link per user: a new request retires the previous one.
-  await AuthToken.deleteMany({ user: user._id, purpose: "password_reset" });
-  await AuthToken.create({
-    user: user._id,
-    purpose: "password_reset",
-    tokenHash: hashToken(token),
-    expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60_000),
-  });
+  const token = await issueEmailedToken(user._id, "password_reset", RESET_TOKEN_TTL_MINUTES * 60_000);
 
   // In the URL fragment, not the query: browsers never send a fragment to any
   // server, so the token stays out of request logs and Referer headers.
@@ -122,25 +140,67 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 /** Returns the id of the user whose password was reset. */
 export async function resetPassword(input: ResetPasswordInput): Promise<string> {
-  // Atomic find-and-delete: two requests racing with the same link can't
-  // both succeed.
-  const resetToken = await AuthToken.findOneAndDelete({
-    tokenHash: hashToken(input.token),
-    purpose: "password_reset",
-    expiresAt: { $gt: new Date() },
-  });
-  if (!resetToken) {
+  const userId = await redeemEmailedToken(input.token, "password_reset");
+  if (!userId) {
     throw new ApiError(400, "This reset link is invalid or has expired. Request a new one.");
   }
 
   const passwordHash = await bcrypt.hash(input.password, PASSWORD_SALT_ROUNDS);
   // Bumping tokenVersion signs out every other session: their refresh tokens
   // stop working (access tokens still live out their ~15 min).
-  const user = await User.findByIdAndUpdate(resetToken.user, { $set: { passwordHash }, $inc: { tokenVersion: 1 } });
+  const user = await User.findByIdAndUpdate(userId, { $set: { passwordHash }, $inc: { tokenVersion: 1 } });
   if (!user) {
     throw new ApiError(400, "This reset link is invalid or has expired. Request a new one.");
   }
+  // The link reached the inbox, which is all verification proves.
+  await markEmailVerified(user._id);
   return user.id;
+}
+
+const VERIFY_TOKEN_TTL_HOURS = 24;
+// Per user. Checked after "already verified", which only the account itself
+// can see.
+const VERIFY_RESEND_LIMIT = 3;
+const VERIFY_RESEND_WINDOW_SECONDS = 60 * 60;
+
+/** Emails a fresh verification link, retiring any earlier one. Throws if it can't be sent. */
+async function sendVerificationEmail(user: UserDocument): Promise<void> {
+  if (!appUrl) throw new Error("No APP_URL is configured, so no verification link can be built");
+  const token = await issueEmailedToken(user._id, "email_verification", VERIFY_TOKEN_TTL_HOURS * 3_600_000);
+  // In the fragment, as with reset links. The page also waits for a click
+  // before redeeming it, so a mail scanner that opens (and even runs) the
+  // link can't verify an address on its owner's behalf.
+  const url = `${appUrl}/verify-email#token=${token}`;
+  await sendMail(verifyEmailEmail(user.email, user.name, url, VERIFY_TOKEN_TTL_HOURS));
+}
+
+/** Sets emailVerifiedAt, keeping the first time if it's already set. */
+async function markEmailVerified(userId: UserDocument["_id"]): Promise<void> {
+  await User.updateOne({ _id: userId, emailVerifiedAt: null }, { $set: { emailVerifiedAt: new Date() } });
+}
+
+export async function resendVerificationEmail(userId: string): Promise<void> {
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(401, "User no longer exists");
+  if (user.emailVerifiedAt) throw new ApiError(400, "Your email is already verified.");
+  if (await isRateLimited(`ratelimit:verify-email:${user.id}`, VERIFY_RESEND_LIMIT, VERIFY_RESEND_WINDOW_SECONDS)) {
+    throw new ApiError(429, "Too many emails sent. Try again in an hour.");
+  }
+
+  try {
+    await sendVerificationEmail(user);
+  } catch (err) {
+    logger.error("Verification email failed to send", err);
+    throw new ApiError(503, "We couldn't send the email just now. Try again in a few minutes.");
+  }
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  const userId = await redeemEmailedToken(token, "email_verification");
+  if (!userId) {
+    throw new ApiError(400, "This verification link is invalid or has expired. Log in to get a new one.");
+  }
+  await markEmailVerified(userId);
 }
 
 export async function getProfile(userId: string): Promise<UserDocument> {

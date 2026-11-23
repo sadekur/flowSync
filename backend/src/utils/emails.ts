@@ -18,6 +18,18 @@ ${body}
 </div></body></html>`;
 }
 
+export function verifyEmailEmail(to: string, name: string, url: string, validHours: number): MailMessage {
+  const intro = `Hi ${name}, welcome to FlowSync. Please confirm that this is your email address.`;
+  const expiry = `The link works once and expires in ${validHours} hours. You can get a new one from the banner in the app.`;
+  const footer = "If you didn't create a FlowSync account, ignore this email.";
+  return {
+    to,
+    subject: "Confirm your FlowSync email address",
+    text: `${intro}\n\nConfirm it here:\n${url}\n\n${expiry}\n\n${footer}\n`,
+    html: layout("Confirm your email address", [intro, expiry], { label: "Confirm my email", url }, footer),
+  };
+}
+
 export function passwordResetEmail(to: string, name: string, url: string, validMinutes: number): MailMessage {
   const intro = `Hi ${name}, someone (hopefully you) asked to reset your FlowSync password.`;
   const expiry = `The link works once and expires in ${validMinutes} minutes.`;

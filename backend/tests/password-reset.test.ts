@@ -45,12 +45,14 @@ describe("POST /api/auth/forgot-password", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ message: GENERIC });
-    expect(testOutbox).toHaveLength(1);
-    expect(testOutbox[0]).toMatchObject({ to: alice.email, subject: "Reset your FlowSync password" });
-    expect(testOutbox[0]?.html).toContain("/reset-password#token=");
+    // Registering already sent a verification email; the reset email is next.
+    const resets = testOutbox.filter((m) => m.subject === "Reset your FlowSync password");
+    expect(resets).toHaveLength(1);
+    expect(resets[0]).toMatchObject({ to: alice.email });
+    expect(resets[0]?.html).toContain("/reset-password#token=");
 
     const token = tokenFromOutbox(alice.email);
-    const stored = await AuthToken.find({}).lean();
+    const stored = await AuthToken.find({ purpose: "password_reset" }).lean();
     expect(stored).toHaveLength(1);
     expect(stored[0]?.tokenHash).not.toBe(token);
     expect(JSON.stringify(stored)).not.toContain(token);

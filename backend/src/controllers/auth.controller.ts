@@ -5,6 +5,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
 } from "../validators/auth.validators";
 import { ACCESS_COOKIE, clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from "../utils/cookies";
 import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
@@ -57,6 +58,17 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   // (someone resetting a password on a shared machine) is left alone.
   if (sessionUserId(req) === userId) clearAuthCookies(res);
   res.status(200).json({ message: "Password updated. Log in with your new password." });
+}
+
+export async function verifyEmail(req: Request, res: Response): Promise<void> {
+  const { token } = verifyEmailSchema.parse(req.body);
+  await authService.verifyEmail(token);
+  res.status(200).json({ message: "Email verified." });
+}
+
+export async function resendVerification(req: Request, res: Response): Promise<void> {
+  await authService.resendVerificationEmail(req.userId as string);
+  res.status(200).json({ message: "Verification email sent." });
 }
 
 /** Whose session this browser's cookies belong to, if any (access or refresh token). */

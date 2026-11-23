@@ -1,16 +1,16 @@
 import { Schema, model, Types, type HydratedDocument, type Model } from "mongoose";
 
-// Single-use tokens mailed to a user. Email verification will add a purpose
-// here; workspace invites get their own model (they're for an email address,
-// not an existing user).
-export const AUTH_TOKEN_PURPOSES = ["password_reset"] as const;
+// Single-use tokens mailed to a user. Every lookup filters on `purpose`, so a
+// token mailed for one job can't be redeemed for another. Workspace invites
+// get their own model (they're for an email address, not an existing user).
+export const AUTH_TOKEN_PURPOSES = ["password_reset", "email_verification"] as const;
 export type AuthTokenPurpose = (typeof AUTH_TOKEN_PURPOSES)[number];
 
 export interface IAuthToken {
   user: Types.ObjectId;
   purpose: AuthTokenPurpose;
   // sha256 of the token that was emailed. The raw token never touches the
-  // database, so a leaked dump can't be used to reset anyone's password.
+  // database, so a leaked dump can't be used to redeem any link.
   tokenHash: string;
   expiresAt: Date;
 }

@@ -7,6 +7,10 @@ export interface IUser {
   passwordHash: string;
   // Bumped to invalidate every outstanding refresh token at once (e.g. on password change).
   tokenVersion: number;
+  // When the user clicked the link in a verification email (or a reset email,
+  // which proves the same thing). null until then. Unverified accounts work
+  // normally; the app only shows a banner.
+  emailVerifiedAt: Date | null;
 }
 
 export interface IUserMethods {
@@ -21,6 +25,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
     tokenVersion: { type: Number, required: true, default: 0 },
+    emailVerifiedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
