@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/client-api";
+import { PasswordInput } from "./PasswordInput";
 
 const MIN_PASSWORD_LENGTH = 8;
 
