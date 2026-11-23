@@ -37,7 +37,10 @@ describe("ResetPasswordForm", () => {
     renderWithStore(<ResetPasswordForm />);
 
     await screen.findByLabelText("New password");
-    // The token leaves the address bar through the Next.js router.
+    expect(replace).not.toHaveBeenCalled();
+    // The token leaves the address bar, through the Next.js router, once the
+    // user starts on the form.
+    await userEvent.click(screen.getByLabelText("New password"));
     expect(replace).toHaveBeenCalledWith("/reset-password", { scroll: false });
 
     await fill("brand-new-pass");
