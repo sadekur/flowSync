@@ -15,7 +15,6 @@ function readTokenFromHash(): string | null {
 
 export function ResetPasswordForm() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   // undefined until the effect has read the fragment (it isn't available
   // during server rendering), then the token or null.
   const [token, setToken] = useState<string | null | undefined>(undefined);
