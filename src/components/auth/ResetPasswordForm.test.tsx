@@ -37,7 +37,8 @@ describe("ResetPasswordForm", () => {
     renderWithStore(<ResetPasswordForm />);
 
     await screen.findByLabelText("New password");
-    expect(window.location.hash).toBe("");
+    // Stripped a tick later, after the router's own history sync.
+    await waitFor(() => expect(window.location.hash).toBe(""));
     expect(window.location.pathname).toBe("/reset-password");
 
     await fill("brand-new-pass");
