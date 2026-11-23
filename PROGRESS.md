@@ -239,6 +239,5 @@
 
 All 13 build steps in `PLANNING.md` are done. Post-MVP candidates (not started):
 - a nonce-based CSP for the Next.js pages (`proxy.ts`)
-- `MONGO_URI` for previews
 - verifying the Docker Compose setup on a machine with Docker
 - the post-MVP features listed in `PLANNING.md` (file uploads, …)
