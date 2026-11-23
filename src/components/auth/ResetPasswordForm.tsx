@@ -54,9 +54,10 @@ export function ResetPasswordForm() {
         method: "POST",
         body: JSON.stringify({ token, password }),
       });
-      // If this browser was logged in as the same account, the API just
-      // cleared its cookies; refresh so the store hydrates from that.
-      router.push("/login?reset=1");
+      // replace, not push: the history entry this page holds is gone, so Back
+      // can't return to it. If this browser was logged in as the same
+      // account, the API just cleared its cookies; refresh to hydrate that.
+      router.replace("/login?reset=1");
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
