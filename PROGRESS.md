@@ -2,7 +2,7 @@
 
 ## Current State
 
-**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 119/119. Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
+**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 132/132. Post-MVP: the email system is in progress (part 1, password reset, is done; email verification and workspace invites are next). Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
 
 ## Completed
 
