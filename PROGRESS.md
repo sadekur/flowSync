@@ -154,6 +154,28 @@ Step 12 (Testing) complete: `npm test` runs 113 Vitest tests (~30 s) — REST in
   - throwaway `s11test-*` users and their workspaces deleted from Atlas afterwards
   - `npm run typecheck:backend` passes
 
+- [x] Step 12: Testing
+  - Tooling:
+    - Vitest 4.1.12 with two projects in `vitest.config.mts`: `backend` (Node, files run one at a time) and `frontend` (jsdom). Plus jsdom 29.1.1 and Testing Library (`react`, `dom`, `user-event`).
+    - Scripts: `npm test`, `test:watch`, `test:backend`, `test:frontend`. One file or test: `npm test -- backend/tests/auth.test.ts -t "duplicate email"`.
+  - Backend harness (`backend/tests/`):
+    - `setup/env.ts` points the backend at `mongodb://127.0.0.1:27017/flowsync_test` and `redis://127.0.0.1:6379/15` (`TEST_MONGO_URI` / `TEST_REDIS_URL` override). It refuses to run unless both are local, the DB name ends in `_test` and the Redis DB isn't 0, so tests can never touch Atlas or the dev Redis.
+    - `helpers/server.ts` starts the real app + Socket.IO + Redis adapter on a random port, exactly as `server.ts` wires it, and resets Mongo/Redis before each test. `helpers/api.ts` is a cookie-jar client that sends CSRF headers like `client-api.ts`. `helpers/sockets.ts` opens real `socket.io-client` connections with the cookie and Origin headers.
+  - Tests:
+    - backend (67): `auth`, `workspaces` (incl. cache invalidation and cascades), `projects-tasks`, `messages-notifications`, `sockets` (handshake, rooms, chat, rate limit, removed-member re-check, typing, presence, task/notification events), `reconnect`
+    - frontend (46): `store/slices`, `store/socketMiddleware` (with the fake socket in `src/test/fakeSocket.ts`), `ChatPanel`, `TaskStatusSelect` (via `TaskCard`), `NotificationBell`, `PresenceList`
+    - Reconnect coverage: rooms don't survive a reconnect until re-joined, `?after=` recovers missed messages, presence goes offline and online without leaking the count, auth is re-checked on reconnect and a rejection stops the retries, and the real store re-joins on its own after 1 and 3 drops and keeps receiving chat/task events.
+  - Fixes found by the tests:
+    - `updateTaskSchema` was `createTaskSchema.partial()`. Zod 4 still applies `status`'s `.default("todo")` inside `.optional()`, so a title-only `PATCH` reset the status. Now built from the bare fields, with a regression test. `docs/api/tasks.md` now says unsent fields stay unchanged.
+    - Password hashing uses bcrypt cost 4 only when `NODE_ENV=test` (12 everywhere else), which brought the backend suite from ~100 s to ~16 s.
+- [x] Verified:
+  - `npm test`: 12 files, 113/113 passing. `typecheck:backend`, `lint:frontend` and `tsc -p tsconfig.json` (src + tests + vitest config) pass. The backend test files also type-check cleanly in a one-off run.
+  - Mutation check in a scratch copy of the repo: five deliberate bugs were each caught by exactly the expected tests. The bugs were: skip the removed member's list invalidation, skip membership invalidation, revert the PATCH schema, drop the re-join on connect, and run presence cleanup on `disconnect` instead of `disconnecting`.
+  - The guard refuses an Atlas-style `TEST_MONGO_URI` and Redis DB 0.
+  - No Atlas data was created or touched: every test ran against the local `flowsync_test` database.
+  - Browser (no login): `/` and `/dashboard` redirect to `/login`, and `/login` and `/register` render. The only console error is a hydration mismatch caused by a browser extension's `cz-shortcut-listen` attribute on `<body>`, not by the app.
+  - **Pending, for the user:** a logged-in browser pass (dashboard, project page: task status change, chat, presence) to confirm nothing regressed. Browser automation can't log in.
+
 ## Next Steps
 
-1. **Step 12: Testing**: API integration tests, socket reconnect tests, key component tests.
+1. **Step 13: Deployment**: Docker Compose (frontend, backend, mongo, redis, nginx), with Nginx handling TLS and repeating the security headers.
