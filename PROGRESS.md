@@ -272,7 +272,36 @@
       - scrub the URL and password from every mail error (`redactSmtpSecrets`)
     - The key has to be rotated in Brevo by the user, then `SMTP_URL` re-entered.
   - The fix is shipped (`release` at `8ca870a`, production health ok).
-  - Pending: the user rotates the Brevo key and re-enters `SMTP_URL`; then a real delivery test.
+  - **Production delivery verified (2026-11-23).**
+    - The user deleted the leaked key in Brevo, generated a new one and re-entered `SMTP_URL`. The value was built from a hidden prompt, so the key was never shown or pasted in the wrong order.
+    - Env changes only apply to new deployments, so production was redeployed.
+    - A reset requested for the user's own account logged no error. The user confirmed the email arrived in Gmail.
+    - Before the new key, a test reset logged only `SMTP_URL must start with smtp://`, with no value: the scrubbing works in production.
+- [x] Email system, part 2 of 3: email verification (a banner, no lockout)
+  - Backend:
+    - `User.emailVerifiedAt` (`null` until verified; existing users start unverified)
+    - `email_verification` added to `AUTH_TOKEN_PURPOSES`; every lookup filters on purpose
+    - the auth service's token issue/redeem is now shared by reset and verification (`issueEmailedToken`, `redeemEmailedToken`)
+    - register emails a 24 h link (`/verify-email#token=…`); a failed send is logged and doesn't fail registration
+    - `POST /api/auth/verify-email` (no auth, no CSRF) and `POST /api/auth/resend-verification` (auth + CSRF, 3 per user per hour, 503 if the send fails)
+    - a password reset also sets `emailVerifiedAt`
+  - Frontend:
+    - `/verify-email`: confirms only on a click of **Confirm my email**, then strips the token
+    - `EmailVerificationBanner` under `AppHeader` for unverified users, with **Resend email**
+    - the fragment-reading code moved from `ResetPasswordForm` into `lib/useHashToken.ts`
+    - `emailVerifiedAt` added to `User` in `types/api.ts`
+  - Tests:
+    - `backend/tests/email-verification.test.ts` (9), `VerifyEmailForm.test.tsx` (3), `EmailVerificationBanner.test.tsx` (3); one reset test updated for the extra registration email
+    - `npm test` passes 156/156
+    - Mutation check in a scratch copy: dropping the purpose filter, the reset-verifies step, and CSRF on resend were each caught
+  - Docs: `docs/api/auth.md` (the user object, both endpoints, register, reset), `DECISIONS.md`
+  - Verified live (local dev):
+    - A throwaway `s15test-verify` user was registered over the API against a second backend on :4001 with no SMTP. It printed the verification email, and `/me` showed `emailVerifiedAt: null`.
+    - In the browser, `/verify-email#token=…` showed the button and made no request until clicked. After the click it said "Your email is verified", and the token was gone from the address bar.
+    - `/me` then had a date, and resend got 400 "already verified".
+    - No app console errors; the only one is the Grammarly hydration warning on `<body>`.
+    - Cleanup: the user deleted from Atlas (its token was already used up).
+  - **Pending for the user:** the banner needs a login, so browser automation can't show it. Log in to see it (existing accounts start unverified), use **Resend email**, and click the link.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
