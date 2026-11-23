@@ -28,9 +28,12 @@ flowSync/
 
 ## Prerequisites
 
-- Node.js ≥ 20, npm ≥ 10
-- MongoDB running locally (`mongod`) — already installed on this machine
-- Redis running locally (`redis-server`) — install with `sudo apt install redis-server` if not yet present
+- Node.js 24 (pinned in `package.json` `engines`, the same version Vercel and the Dockerfile run), npm ≥ 10
+- A MongoDB database for `MONGO_URI`. Dev uses a MongoDB Atlas cluster; a local `mongod` (`mongodb://127.0.0.1:27017/flowsync`) works too
+- Redis on `localhost:6379`:
+  - **Linux:** `sudo apt install redis-server` (runs as the `redis-server` systemd service; check with `systemctl is-active redis-server`)
+  - **Windows:** [Memurai](https://www.memurai.com/), a Redis-compatible service (`winget install Memurai.MemuraiDeveloper`, from an elevated shell)
+- For `npm test` only: a **local** MongoDB on `127.0.0.1:27017` as well. The backend tests refuse to run against anything but a local `*_test` database, so they never touch `MONGO_URI`
 
 ## Setup
 
