@@ -1,0 +1,10 @@
+# CLI deploys upload the working directory: keep secrets and build output out.
+# Vercel builds from source and injects env vars from the project settings.
+.env
+.env.*
+!.env.example
+deploy/nginx/certs
+backend/dist
+.next
+*.pem
+*.tsbuildinfo
