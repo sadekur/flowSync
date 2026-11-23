@@ -1,49 +1,22 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/client-api";
+import { useHashToken } from "@/lib/useHashToken";
 import { PasswordInput } from "./PasswordInput";
 
 const MIN_PASSWORD_LENGTH = 8;
 
-/** Reads `#token=…` from the URL fragment (never sent to any server). */
-function readTokenFromHash(): string | null {
-  const params = new URLSearchParams(window.location.hash.slice(1));
-  return params.get("token");
-}
-
 export function ResetPasswordForm() {
   const router = useRouter();
-  // undefined until the effect has read the fragment (it isn't available
-  // during server rendering), then the token or null.
-  const [token, setToken] = useState<string | null | undefined>(undefined);
+  // The token leaves the address bar on the first focus into the form.
+  const { token, stripTokenFromUrl } = useHashToken();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    const found = readTokenFromHash();
-    if (!found) {
-      // Keep a token an earlier run already took (Strict Mode runs this
-      // effect twice in dev).
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- the fragment only exists in the browser
-      setToken((current) => current ?? null);
-      return;
-    }
-    setToken(found);
-  }, []);
-
-  // Drop the token from the address bar once it's in memory, on the first
-  // focus into the form. Not on mount: the Next.js router rewrites the URL
-  // from its own state while it starts up, and in the browser that put a
-  // stripped hash straight back (both via window.history and router.replace).
-  // Once the page is interactive the router has settled.
-  function stripTokenFromUrl(): void {
-    if (window.location.hash) router.replace(window.location.pathname, { scroll: false });
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
