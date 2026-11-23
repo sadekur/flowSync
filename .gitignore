@@ -38,4 +38,6 @@ yarn-error.log*
 # misc
 .DS_Store
 *.pem
+# TLS keys for docker-compose's Nginx (deploy/make-dev-cert.sh) — never commit
+deploy/nginx/certs/
 .env*
