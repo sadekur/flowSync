@@ -1,0 +1,10 @@
+node_modules
+.next
+.vercel
+backend/dist
+.git
+.env
+.env.*
+!.env.example
+deploy/nginx/certs
+*.tsbuildinfo
