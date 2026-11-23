@@ -1,23 +1,17 @@
-import http from "node:http";
 import { env } from "./config/env";
-import { createApp } from "./app";
 import { connectDB, disconnectDB } from "./config/db";
 import { connectRedis, disconnectRedis } from "./config/redis";
 import { logger } from "./utils/logger";
-import { createSocketServer } from "./sockets";
 import { setIo } from "./sockets/emitter";
+import { createHttpServer } from "./httpServer";
 
+// Long-running entry: `npm run dev:backend`, `npm run start:backend`, Docker.
+// On Vercel the entry is vercel.ts instead (Vercel owns the listening).
 async function main(): Promise<void> {
   await connectRedis();
   await connectDB();
 
-  const app = createApp();
-  // http.createServer wraps the app (rather than app.listen directly) so
-  // Socket.IO shares the same server/port as the REST API.
-  const httpServer = http.createServer(app);
-  const io = createSocketServer(httpServer);
-  // Publishes `io` to the REST layer (task controllers broadcast through it).
-  setIo(io);
+  const { httpServer, io } = createHttpServer();
 
   httpServer.listen(env.PORT, () => {
     logger.info(`Backend listening on port ${env.PORT}`);
