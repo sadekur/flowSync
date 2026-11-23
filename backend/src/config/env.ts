@@ -29,6 +29,32 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((value) => value || undefined),
+  // Where links in emails point (password reset, …). Never taken from the
+  // request's Host header: a forged Host would mail out a link to an
+  // attacker's site carrying a real reset token. Falls back to CORS_ORIGIN
+  // (dev), then Vercel's own system variables (see appUrl below).
+  APP_URL: z
+    .string()
+    .optional()
+    .transform((value) => value || undefined)
+    .pipe(z.string().url("APP_URL must be a valid URL").optional()),
+  // Outgoing mail. SMTP_URL (e.g. Mailtrap's sandbox in dev) wins; otherwise
+  // RESEND_API_KEY (set by the Vercel Marketplace integration) goes through
+  // Resend's SMTP relay. With neither, dev prints emails to the console.
+  SMTP_URL: z
+    .string()
+    .optional()
+    .transform((value) => value || undefined),
+  RESEND_API_KEY: z
+    .string()
+    .optional()
+    .transform((value) => value || undefined),
+  // Without a verified domain, Resend only sends from onboarding@resend.dev.
+  MAIL_FROM: z.string().min(1).default("FlowSync <onboarding@resend.dev>"),
+  // Vercel system variables (set by the platform, not by us).
+  VERCEL_ENV: z.string().optional(),
+  VERCEL_URL: z.string().optional(),
+  VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
