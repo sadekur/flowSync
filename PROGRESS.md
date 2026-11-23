@@ -226,6 +226,11 @@
   - `MONGO_URI` was added for previews by the user, and a preview deploy (`flowsync-3si0lyj42`) answered `ok`.
   - Verified with an empty commit `55b39e7`: pushed to `master`, no deployment after 45 s; pushed to `release`, a production deployment, Ready, with live health ok.
   - How to ship: `git push origin master:release`.
+- [x] Post-MVP small fixes:
+  - **Tasks deleted during a disconnect now disappear on reconnect.** The catch-up fetch replaces the list (`tasksSyncStarted` / `tasksSynced` in `store/tasksSlice.ts`), and tasks a live event changed mid-fetch keep their live state. Three slice tests plus `components/tasks/TaskList.test.tsx` (disconnect → delete elsewhere → rejoin). In a scratch copy, reverting to the old merge failed all three new tests.
+  - `engines.node` pinned to `24.x`
+  - README prerequisites updated: Atlas or local Mongo, Redis on Linux and Windows, local Mongo for tests
+  - Docs: `docs/api/sockets.md` (catch-up), `DECISIONS.md` ("Post-MVP fixes")
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
