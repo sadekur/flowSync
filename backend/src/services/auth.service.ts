@@ -72,6 +72,75 @@ export async function refresh(refreshToken: string): Promise<AuthResult> {
   return { user, tokens: issueTokens(user) };
 }
 
+const RESET_TOKEN_TTL_MINUTES = 30;
+// Per email address, checked before the user lookup so the 429 says nothing
+// about whether an account exists.
+const RESET_REQUEST_LIMIT = 3;
+const RESET_REQUEST_WINDOW_SECONDS = 60 * 60;
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+/**
+ * Emails a single-use reset link if an account exists. The caller answers the
+ * same way either way. (Registration's 409 already reveals whether an email is
+ * taken, so this doesn't try to hide the extra time a real send takes.)
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  if (await isRateLimited(`ratelimit:password-reset:${email}`, RESET_REQUEST_LIMIT, RESET_REQUEST_WINDOW_SECONDS)) {
+    throw new ApiError(429, "Too many reset requests for this email. Try again in an hour.");
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) return;
+  if (!appUrl) {
+    logger.error("Password reset requested but no APP_URL is configured, so no link can be built");
+    return;
+  }
+
+  const token = crypto.randomBytes(32).toString("base64url");
+  // One live link per user: a new request retires the previous one.
+  await AuthToken.deleteMany({ user: user._id, purpose: "password_reset" });
+  await AuthToken.create({
+    user: user._id,
+    purpose: "password_reset",
+    tokenHash: hashToken(token),
+    expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60_000),
+  });
+
+  // In the URL fragment, not the query: browsers never send a fragment to any
+  // server, so the token stays out of request logs and Referer headers.
+  const url = `${appUrl}/reset-password#token=${token}`;
+  try {
+    await sendMail(passwordResetEmail(user.email, user.name, url, RESET_TOKEN_TTL_MINUTES));
+  } catch (err) {
+    // Same answer to the caller as a success; the failure is for the logs.
+    logger.error("Password reset email failed to send", err);
+  }
+}
+
+export async function resetPassword(input: ResetPasswordInput): Promise<void> {
+  // Atomic find-and-delete: two requests racing with the same link can't
+  // both succeed.
+  const resetToken = await AuthToken.findOneAndDelete({
+    tokenHash: hashToken(input.token),
+    purpose: "password_reset",
+    expiresAt: { $gt: new Date() },
+  });
+  if (!resetToken) {
+    throw new ApiError(400, "This reset link is invalid or has expired. Request a new one.");
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, PASSWORD_SALT_ROUNDS);
+  // Bumping tokenVersion signs out every other session: their refresh tokens
+  // stop working (access tokens still live out their ~15 min).
+  const user = await User.findByIdAndUpdate(resetToken.user, { $set: { passwordHash }, $inc: { tokenVersion: 1 } });
+  if (!user) {
+    throw new ApiError(400, "This reset link is invalid or has expired. Request a new one.");
+  }
+}
+
 export async function getProfile(userId: string): Promise<UserDocument> {
   const user = await User.findById(userId);
   if (!user) {
