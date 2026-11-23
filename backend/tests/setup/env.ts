@@ -38,9 +38,8 @@ Object.assign(process.env, {
   JWT_REFRESH_EXPIRES_IN: "7d",
   CORS_ORIGIN: "http://localhost:3000",
   COOKIE_DOMAIN: "localhost",
-  // Set (to empty, i.e. off) so .env's real mail settings can't load: tests
-  // capture mail in testOutbox and must never reach an SMTP server.
+  // Set (SMTP_URL to empty, i.e. off) so .env's real mail settings can't
+  // load: tests capture mail in testOutbox and must never reach an SMTP server.
   APP_URL: "http://localhost:3000",
   SMTP_URL: "",
-  RESEND_API_KEY: "",
 });
