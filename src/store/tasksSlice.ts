@@ -14,6 +14,10 @@ const tasksAdapter = createEntityAdapter({
 // Holds one project's tasks at a time — the project page currently open.
 const initialState = tasksAdapter.getInitialState({
   projectId: null as string | null,
+  // While a catch-up fetch is in flight: the ids live events changed since it
+  // started. Their current state is newer than the fetched list, so the
+  // reconcile keeps it. null when no catch-up is running.
+  syncTouched: null as Record<string, true> | null,
 });
 
 const tasksSlice = createSlice({
