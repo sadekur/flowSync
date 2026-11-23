@@ -2,7 +2,7 @@
 
 ## Current State
 
-Step 12 (Testing) complete: `npm test` runs 113 Vitest tests (~30 s) — REST integration and Socket.IO tests against a real backend on a local throwaway Mongo database + Redis DB, reconnect tests (including the real Redux store's `socketMiddleware` against that server), and frontend slice/middleware/component tests in jsdom. Writing them found and fixed one real bug: a `PATCH` that didn't send `status` reset the task to `"todo"`. Browser check of the logged-in pages is pending for the user (see Step 12 below).
+Step 13 (Deployment) in progress, targeting Vercel at the user's choice (one project, two services). The code is ready and the local `vercel build --prod` passes. The first deploy is waiting on three user actions: accept the Redis Marketplace terms, rotate the Atlas password and open Atlas network access, and add `MONGO_URI` to Vercel (see Step 13 below). Docker Compose + Nginx files for self-hosting are written but not run, because Docker isn't installed on this machine. Step 12: 115 tests, and the logged-in browser pass is still pending for the user.
 
 ## Completed
 
