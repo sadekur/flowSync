@@ -14,7 +14,14 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16, "JWT_REFRESH_SECRET must be a long random value"),
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
-  CORS_ORIGIN: z.string().url("CORS_ORIGIN must be a valid URL"),
+  // The frontend's origin when it is NOT the API's own (dev: Next on :3000,
+  // API on :4000). Leave unset for same-origin deploys (Vercel, Docker+Nginx):
+  // cross-origin requests are then refused, and sockets accept same-origin only.
+  CORS_ORIGIN: z
+    .string()
+    .optional()
+    .transform((value) => value || undefined)
+    .pipe(z.string().url("CORS_ORIGIN must be a valid URL").optional()),
   // Unset (or empty) → host-only cookies, scoped to exactly the host that set
   // them. That's what a same-origin deploy wants (Vercel, Docker+Nginx): every
   // preview URL gets its own cookies, with no Domain to configure.
