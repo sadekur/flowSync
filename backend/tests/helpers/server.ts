@@ -52,4 +52,5 @@ export async function startTestServer(): Promise<TestServer> {
 export async function resetData(): Promise<void> {
   await Promise.all(Object.values(mongoose.connection.collections).map((c) => c.deleteMany({})));
   await redis.flushdb();
+  testOutbox.length = 0;
 }
