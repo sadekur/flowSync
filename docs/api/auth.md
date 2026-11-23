@@ -36,7 +36,7 @@ If an account has that email, emails it a single-use reset link: `{APP_URL}/rese
 
 Body: `{ "token": string, "password": string (min 8) }`. No auth, no CSRF: the token is the credential.
 
-- **200** — `{ "message": "Password updated. Log in with your new password." }`. The token is used up (atomically, so two racing requests can't both win), and the user's `tokenVersion` is bumped, so every existing session's refresh token stops working; access tokens expire within ~15 min. Also clears this browser's auth cookies. The user is **not** logged in.
+- **200** — `{ "message": "Password updated. Log in with your new password." }`. The token is used up (atomically, so two racing requests can't both win), and the user's `tokenVersion` is bumped, so every existing session's refresh token stops working; access tokens expire within ~15 min. If this browser's cookies belong to the same account, they are cleared too; a different account's session in the same browser is left alone. The user is **not** logged in.
 - **400** — `{ "error": "This reset link is invalid or has expired. Request a new one." }` for an unknown, used, superseded or expired token; or a validation failure (e.g. a short password), which does not use the token up
 
 ## `POST /api/auth/refresh`
