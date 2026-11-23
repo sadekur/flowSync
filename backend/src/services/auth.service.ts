@@ -4,8 +4,12 @@ import { User, type UserDocument } from "../models/User";
 import { ApiError } from "../middleware/errorHandler";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import type { LoginInput, RegisterInput } from "../validators/auth.validators";
+import { env } from "../config/env";
 
-const PASSWORD_SALT_ROUNDS = 12;
+// 12 everywhere real. The test suite registers a few users per test, and
+// bcryptjs (pure JS) takes ~0.8 s per hash at 12, so NODE_ENV=test — set only
+// by backend/tests/setup/env.ts — uses the minimum cost instead.
+const PASSWORD_SALT_ROUNDS = env.NODE_ENV === "test" ? 4 : 12;
 
 export interface AuthTokens {
   accessToken: string;

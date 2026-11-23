@@ -4,6 +4,7 @@ import { createFixture, registerUser, TestClient } from "./helpers/api";
 import { Project } from "../src/models/Project";
 import { Task } from "../src/models/Task";
 import { Message } from "../src/models/Message";
+import { createMessage } from "../src/services/message.service";
 import { Notification } from "../src/models/Notification";
 import { Workspace } from "../src/models/Workspace";
 
@@ -149,7 +150,7 @@ describe("DELETE /api/workspaces/:id", () => {
     // A task assigned to the member creates a notification as well.
     const task = await f.owner.client.post(`${f.projectPath}/tasks`, { title: "Ship it", assignee: f.member.id });
     expect(task.status).toBe(201);
-    await Message.create({ project: f.project._id, sender: f.owner.id, text: "hello" });
+    await createMessage({ _id: f.project._id, workspace: f.workspace._id }, f.owner.id, "hello");
 
     expect(await Notification.countDocuments()).toBe(1);
 

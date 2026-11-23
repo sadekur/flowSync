@@ -3,6 +3,7 @@ import { startTestServer, resetData, type TestServer } from "./helpers/server";
 import { createFixture } from "./helpers/api";
 import { Task } from "../src/models/Task";
 import { Message } from "../src/models/Message";
+import { createMessage } from "../src/services/message.service";
 import { Notification } from "../src/models/Notification";
 
 let server: TestServer;
@@ -51,7 +52,7 @@ describe("projects", () => {
   it("cascades a delete to the project's tasks, messages and notifications", async () => {
     const f = await createFixture(server.url);
     await f.owner.client.post(`${f.projectPath}/tasks`, { title: "Child", assignee: f.member.id });
-    await Message.create({ project: f.project._id, sender: f.owner.id, text: "hi" });
+    await createMessage({ _id: f.project._id, workspace: f.workspace._id }, f.owner.id, "hi");
 
     expect((await f.owner.client.delete(f.projectPath)).status).toBe(204);
     expect(await Task.countDocuments({ project: f.project._id })).toBe(0);
