@@ -17,35 +17,39 @@ beforeEach(() => {
   vi.mocked(apiFetch).mockReset();
 });
 
+function resendButton(): HTMLButtonElement | null {
+  return screen.queryByRole("button", { name: "Resend email" });
+}
+
 describe("EmailVerificationBanner", () => {
   it("resends the verification email", async () => {
     vi.mocked(apiFetch).mockResolvedValue({ message: "Verification email sent." });
     renderWithStore(<EmailVerificationBanner email="alice@example.com" />);
 
-    expect(screen.getByText("alice@example.com")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Resend email" }));
+    expect(screen.getByText("alice@example.com")).toBeTruthy();
+    await userEvent.click(resendButton()!);
     expect(apiFetch).toHaveBeenCalledWith("/api/auth/resend-verification", { method: "POST" });
-    expect(await screen.findByRole("status")).toHaveTextContent("Check your inbox");
-    expect(screen.queryByRole("button", { name: "Resend email" })).not.toBeInTheDocument();
+    expect((await screen.findByRole("status")).textContent).toContain("Check your inbox");
+    expect(resendButton()).toBeNull();
   });
 
   it("shows the rate-limit message and keeps the button", async () => {
     vi.mocked(apiFetch).mockRejectedValue(new ApiError(429, "Too many emails sent. Try again in an hour."));
     renderWithStore(<EmailVerificationBanner email="alice@example.com" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Resend email" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Try again in an hour");
-    expect(screen.getByRole("button", { name: "Resend email" })).toBeEnabled();
+    await userEvent.click(resendButton()!);
+    expect((await screen.findByRole("alert")).textContent).toContain("Try again in an hour");
+    expect(resendButton()?.disabled).toBe(false);
   });
 });
 
 describe("AppHeader", () => {
   it("shows the banner only to unverified users", () => {
     const { unmount } = renderWithStore(<AppHeader user={makeUser("Alice", { emailVerifiedAt: null })} />);
-    expect(screen.getByRole("button", { name: "Resend email" })).toBeInTheDocument();
+    expect(resendButton()).toBeTruthy();
     unmount();
 
     renderWithStore(<AppHeader user={makeUser("Bob")} />);
-    expect(screen.queryByRole("button", { name: "Resend email" })).not.toBeInTheDocument();
+    expect(resendButton()).toBeNull();
   });
 });
