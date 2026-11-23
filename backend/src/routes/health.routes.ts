@@ -5,10 +5,23 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 export const healthRouter = Router();
 
+const MONGO_WAIT_MS = 5_000;
+
 healthRouter.get(
   "/health",
   asyncHandler(async (_req, res) => {
-    const mongoConnected = mongoose.connection.readyState === 1;
+    // Like the Redis ping below, wait (briefly) for a connection that is still
+    // opening instead of reporting the instant's state. On Vercel the connect
+    // started at module load only makes progress while a request is in flight,
+    // so a snapshot reads "disconnected" for the first several requests even
+    // though queries (which Mongoose buffers) would succeed.
+    if (mongoose.connection.readyState === mongoose.ConnectionStates.connecting) {
+      await Promise.race([
+        mongoose.connection.asPromise().catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, MONGO_WAIT_MS)),
+      ]);
+    }
+    const mongoConnected = mongoose.connection.readyState === mongoose.ConnectionStates.connected;
 
     let redisConnected = false;
     try {
