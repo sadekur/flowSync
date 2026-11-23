@@ -71,6 +71,13 @@ Run from the repo root.
 
 There is no `lint:backend` or `typecheck:frontend`. For the frontend (and its `*.test.tsx`), use `npx tsc --noEmit -p tsconfig.json`. `typecheck:backend` covers only `backend/src`, not `backend/tests`.
 
+**Deploying (Vercel project `sadekurs-projects/flowsync`, linked in `.vercel/`; CLI deploys only, not connected to GitHub):**
+- Use `npx vercel@65.12.1 …`, not the older global CLI, which predates Services.
+- `vercel build --prod` reproduces the cloud build locally, and is the quickest check that `vercel.json` and the API entry still bundle.
+- Then deploy with `vercel deploy --prod`.
+
+Vercel's builder type-checks from the entry file, so any global `.d.ts` must be reachable from it (see the `/// <reference>` in `app.ts`). Production env vars live in Vercel (`vercel env ls`): `MONGO_URI`, `REDIS_URL` (Redis Marketplace integration), and the JWT secrets as Secrets. `CORS_ORIGIN`, `COOKIE_DOMAIN` and `NEXT_PUBLIC_*` stay **unset** there: the deploy is same-origin.
+
 **Tests never use `.env`'s database.** `backend/tests/setup/env.ts` points the backend at a local `mongodb://127.0.0.1:27017/flowsync_test` and Redis DB 15, wiping both before each test. It refuses to run against anything non-local, a database not named `*_test`, or Redis DB 0 (override with `TEST_MONGO_URI` / `TEST_REDIS_URL`). Backend tests start the real app via `backend/tests/helpers/server.ts`. Use `createFixture()` (owner + member + outsider sharing one workspace/project) and `helpers/sockets.ts` instead of hand-rolling cookies or socket headers. Frontend tests mock `socket.io-client` with `src/test/fakeSocket.ts` and `@/lib/client-api`'s `apiFetch`, around a real `makeStore()`. Under `NODE_ENV=test` (set only by that setup file), bcrypt uses cost 4.
 
 Backend dev requires Redis running locally on port 6379 and a reachable MongoDB; `connectRedis()`/`connectDB()` in `backend/src/server.ts` fail fast and loudly on startup if either is unreachable. Where that Redis comes from depends on the dev machine:
