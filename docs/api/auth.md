@@ -14,7 +14,7 @@ Every `{ "user": {...} }` below is the profile: `_id`, `name`, `email`, `tokenVe
 
 Body: `{ "name": string, "email": string, "password": string (min 8) }`
 
-- **201** — sets auth cookies, returns `{ "user": { ...profile, no passwordHash } }`
+- **201** — sets auth cookies, returns `{ "user": { ...profile, emailVerifiedAt: null } }`, and emails a verification link (see `verify-email`). A failed send is logged, not reported: the account exists either way, and the banner's resend is the retry.
 - **409** — email already in use
 - **400** — validation failed, `{ "error": "Validation failed", "issues": [{ "path", "message" }] }`
 
