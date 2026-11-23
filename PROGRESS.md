@@ -231,6 +231,13 @@
   - `engines.node` pinned to `24.x`
   - README prerequisites updated: Atlas or local Mongo, Redis on Linux and Windows, local Mongo for tests
   - Docs: `docs/api/sockets.md` (catch-up), `DECISIONS.md` ("Post-MVP fixes")
+  - Verified in the user's logged-in browser (local dev), with a throwaway `s14test-ws` workspace:
+    - Two tasks were created.
+    - One was deleted straight from MongoDB, so no `task:deleted` was sent, and the tab kept showing it.
+    - The page's WebSocket was then closed from page JS to simulate a network drop. The client reconnected, the badge returned to "Live", and the deleted task vanished on its own.
+    - A task added from a second tab then appeared live in the first.
+    - No app console errors; the only one is a hydration warning from browser extensions (ColorZilla, Grammarly) adding attributes to `<body>`.
+    - Cleanup: the workspace, project and 2 tasks were deleted from Atlas, and the stale Redis cache entries (the user's workspace list, the project→workspace key) were removed.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
