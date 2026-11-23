@@ -214,6 +214,10 @@ The email system is built in three parts, each paused for review: password reset
   - The per-email limit (3/hour, Redis) runs before the account lookup, so a 429 reveals nothing either.
   - The extra time a real send takes isn't masked: registration's 409 already tells anyone whether an email is taken, so hiding it here would add complexity without closing anything.
   - A failed send is logged, not reported, so a 500 can't reveal existence either.
+- **Mail errors are scrubbed before anything logs them, and `SMTP_URL` is checked before use.** On the first production deploy, `SMTP_URL` had been entered as the key followed by the URL. nodemailer's `TypeError` quoted the whole string, and `requestPasswordReset` logged it, so the Brevo key ended up in Vercel's runtime logs. The key was treated as leaked and rotated. Now:
+  - `smtpUrlProblem()` rejects anything that isn't `smtp(s)://login:password@host`, with a message that never contains the value.
+  - Errors from `createTransport` and `sendMail` are rethrown as fresh `Error`s, with the URL and the password (raw and URL-decoded) replaced by `<redacted>`.
+  - A bad `SMTP_URL` doesn't crash the API (unlike the other env vars). Reset requests still answer normally, and the log says what's wrong.
 - **No CSRF on these two routes.** No session is involved, and the reset token is itself the credential. A forged cross-site `forgot-password` can at most send the owner a reset email they didn't ask for, and the rate limit caps that.
 
 Full step-by-step build plan lives in `PLANNING.md`.
