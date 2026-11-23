@@ -15,7 +15,13 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   CORS_ORIGIN: z.string().url("CORS_ORIGIN must be a valid URL"),
-  COOKIE_DOMAIN: z.string().min(1),
+  // Unset (or empty) → host-only cookies, scoped to exactly the host that set
+  // them. That's what a same-origin deploy wants (Vercel, Docker+Nginx): every
+  // preview URL gets its own cookies, with no Domain to configure.
+  COOKIE_DOMAIN: z
+    .string()
+    .optional()
+    .transform((value) => value || undefined),
 });
 
 const parsed = envSchema.safeParse(process.env);
