@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { connectDB, disconnectDB } from "../../src/config/db";
 import { connectRedis, disconnectRedis, redis } from "../../src/config/redis";
 import { setIo } from "../../src/sockets/emitter";
+import { testOutbox } from "../../src/utils/mailer";
 import { createHttpServer } from "../../src/httpServer";
 import type { IoServer } from "../../src/sockets/types";
 
