@@ -190,11 +190,11 @@
 
 The email system is built in three parts, each paused for review: password reset, then email verification, then workspace invites. Unverified accounts will only get a banner, never a lockout (user's choice).
 
-- **Providers: Mailtrap's sandbox in dev, Resend in production, one SMTP code path.** `utils/mailer.ts` uses nodemailer (10.4.0, pinned) with `SMTP_URL`, or with Resend's SMTP relay when only `RESEND_API_KEY` is set (`smtps://resend:<key>@smtp.resend.com:465`).
-  - Resend is the only email provider on the Vercel Marketplace, and installing it sets `RESEND_API_KEY` in Vercel by itself.
+- **Providers: Mailtrap's sandbox in dev, Brevo in production, one SMTP code path.** `utils/mailer.ts` uses nodemailer (10.4.0, pinned) with `SMTP_URL`, so changing provider is an env change, not a code change.
+  - **Production went from Resend to Brevo.** Resend is the only email provider on the Vercel Marketplace, so it was the first pick, and the user accepted its terms. But its installer requires a domain you own ("you must own a domain to be able to send"), and FlowSync only has `flowsync-eight.vercel.app`. Brevo's free plan (300 emails/day) allows **single-sender verification**: one confirmed address, no domain, delivering to anyone. The user chose Brevo over buying a domain or using Gmail SMTP. `MAIL_FROM` must be that verified address. The Resend-only code path was removed.
   - Mailtrap (the user's suggestion) catches every email in a web inbox and delivers none. Dev can therefore use made-up addresses, which invites will need.
-  - With neither configured, dev prints the email to the backend console. Production throws instead: an email carries a live token and must never land in logs.
-  - Tests capture mail in `testOutbox`. The test setup blanks `SMTP_URL` / `RESEND_API_KEY`, so `.env`'s real settings can never reach a test.
+  - With no `SMTP_URL`, dev prints the email to the backend console. Production throws instead: an email carries a live token and must never land in logs.
+  - Tests capture mail in `testOutbox`. The test setup blanks `SMTP_URL`, so `.env`'s real settings can never reach a test.
 - **Link base URL from config, never from the request.** `appUrl` resolves in this order: `APP_URL`, then `CORS_ORIGIN` (dev), then Vercel's system variables (the production domain in production, the deployment's own URL in a preview). Building it from the `Host` header would allow host-header poisoning: a forged `Host` mails the victim a real token pointing at an attacker's site.
 - **Token handling:**
   - 32 random bytes, base64url. Only the sha256 is stored, in an `AuthToken` collection (with a `purpose`, so email verification can reuse it).
