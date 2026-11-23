@@ -250,6 +250,17 @@
     - `backend/tests/password-reset.test.ts` (10), `components/auth/ResetPasswordForm.test.tsx` (5, including a Strict Mode regression) and `PasswordInput.test.tsx` (2); `npm test` passes 136/136
     - Mutation check in a scratch copy: a reusable token, no session sign-out, and old links staying live were each caught
   - Docs: `docs/api/auth.md`, `.env.example`, `DECISIONS.md`
+  - Verified live (local dev, the user's browser):
+    - A throwaway `s14test-reset` user was registered over the API. A second backend on :4001 printed the reset email; there's no SMTP yet.
+    - The link opened the form. The token left the address bar on the first focus. The eye toggle showed and hid the password.
+    - Submitting led to `/login?reset=1`. The browser's own session (a different account) stayed logged in, as intended.
+    - Over the API, the old password got 401 and the new one 200, and reusing the link got 400. No app console errors.
+    - The browser found three bugs, all fixed with tests:
+      - an unconditional cookie clear that logged out a different account
+      - Strict Mode wiping the token
+      - the hash strip being undone during router startup
+    - Cleanup: the user and its rate-limit keys were deleted.
+  - Not yet done: a real send through Mailtrap (`SMTP_URL` not in `.env` yet) and through Resend in production (terms not accepted yet)
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
