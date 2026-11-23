@@ -120,7 +120,8 @@ export async function requestPasswordReset(email: string): Promise<void> {
   }
 }
 
-export async function resetPassword(input: ResetPasswordInput): Promise<void> {
+/** Returns the id of the user whose password was reset. */
+export async function resetPassword(input: ResetPasswordInput): Promise<string> {
   // Atomic find-and-delete: two requests racing with the same link can't
   // both succeed.
   const resetToken = await AuthToken.findOneAndDelete({
