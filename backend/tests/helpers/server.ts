@@ -13,9 +13,10 @@ export interface TestServer {
 }
 
 /**
- * The same wiring as server.ts (REST app + Socket.IO with the Redis adapter on
- * one HTTP server, `io` registered for the REST layer's broadcasts), on a
- * random port, against the test database set up in setup/env.ts.
+ * The exact wiring server.ts and vercel.ts use (createHttpServer: REST app +
+ * Socket.IO with the Redis adapter on one HTTP server, `io` registered for the
+ * REST layer's broadcasts), on a random port, against the test database set up
+ * in setup/env.ts.
  */
 export async function startTestServer(): Promise<TestServer> {
   await connectRedis();
