@@ -247,7 +247,7 @@
     - `APP_URL` + `appUrl` resolution in `config/env.ts`
   - Frontend: `/forgot-password`, `/reset-password` (token read from the URL fragment, then stripped), and a "Forgot your password?" link plus a "Password updated" notice on `/login`
   - Tests:
-    - `backend/tests/password-reset.test.ts` (9) and `components/auth/ResetPasswordForm.test.tsx` (4); `npm test` passes 132/132
+    - `backend/tests/password-reset.test.ts` (10) and `components/auth/ResetPasswordForm.test.tsx` (4); `npm test` passes 133/133
     - Mutation check in a scratch copy: a reusable token, no session sign-out, and old links staying live were each caught
   - Docs: `docs/api/auth.md`, `.env.example`, `DECISIONS.md`
 - [ ] Pending for the user:
