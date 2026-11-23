@@ -11,7 +11,11 @@
     "dev:backend": "tsx watch backend/src/server.ts",
     "build:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --outDir backend/dist --rootDir backend/src --sourceMap; fi",
     "start:backend": "node backend/dist/server.js",
-    "typecheck:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --noEmit --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --rootDir backend/src; fi"
+    "typecheck:backend": "f=$(find backend/src -name '*.ts'); if [ -z \"$f\" ]; then echo 'backend: no source files yet — see Step 2'; else tsc $f --noEmit --target ES2022 --module CommonJS --moduleResolution node --lib ES2022 --strict --esModuleInterop --skipLibCheck --forceConsistentCasingInFileNames --resolveJsonModule --noUncheckedIndexedAccess --rootDir backend/src; fi",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:backend": "vitest run --project backend",
+    "test:frontend": "vitest run --project frontend"
   },
   "engines": {
     "node": ">=20"
