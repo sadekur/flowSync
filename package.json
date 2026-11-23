@@ -4,6 +4,7 @@
   "private": true,
   "description": "FlowSync — real-time team collaboration platform (Next.js + Express + Socket.IO + MongoDB + Redis)",
   "scripts": {
+    "vercel-build": "next build",
     "dev:frontend": "next dev",
     "build:frontend": "next build",
     "start:frontend": "next start",

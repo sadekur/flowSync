@@ -1,3 +1,7 @@
+// Pulls in the req.userId / req.workspace / … augmentation for anything that
+// type-checks from an entry file (Vercel's builder starts at vercel.ts and
+// would never see a .d.ts nothing imports).
+/// <reference path="./types/express.d.ts" />
 import express, { type Express } from "express";
 import helmet from "helmet";
 import cors from "cors";
