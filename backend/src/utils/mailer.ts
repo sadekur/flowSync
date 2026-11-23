@@ -67,7 +67,12 @@ function getTransporter(): Transporter | null {
       const problem = smtpUrlProblem(env.SMTP_URL);
       // Not cached: a fixed env var takes effect on the next instance anyway.
       if (problem) throw new Error(`Email isn't configured: ${problem}`);
-      transporter = nodemailer.createTransport(env.SMTP_URL);
+      try {
+        transporter = nodemailer.createTransport(env.SMTP_URL);
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        throw new Error(`Email isn't configured: ${redactSmtpSecrets(detail, env.SMTP_URL)}`);
+      }
     }
   }
   return transporter;
