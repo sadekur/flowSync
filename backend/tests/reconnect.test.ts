@@ -190,7 +190,7 @@ describe("socketMiddleware against the real server", () => {
   });
 
   it("re-joins the open project by itself after a drop and keeps receiving live updates", async () => {
-    const { store, statuses } = createBrowserStore(f.member.client.cookieHeader);
+    const { store, statuses, joins } = createBrowserStore(f.member.client.cookieHeader);
     const projectId = f.project._id;
     // What the project page does on mount.
     store.dispatch(messagesHydrated({ projectId, messages: [], hasOlder: false }));
