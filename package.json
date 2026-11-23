@@ -19,7 +19,7 @@
     "test:frontend": "vitest run --project frontend"
   },
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
