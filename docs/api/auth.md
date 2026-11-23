@@ -22,6 +22,23 @@ Body: `{ "email": string, "password": string }`
 - **401** — invalid email or password
 - **400** — validation failed (same shape as register)
 
+## `POST /api/auth/forgot-password`
+
+Body: `{ "email": string }`. No auth, no CSRF (no session is involved).
+
+If an account has that email, emails it a single-use reset link: `{APP_URL}/reset-password#token=<token>`. The link is valid for 30 minutes, and requesting a new one retires the previous one. The token sits in the URL **fragment**, which browsers never send to a server, so it stays out of request logs and `Referer` headers. Only its sha256 is stored (`AuthToken`, deleted by a TTL index after it expires).
+
+- **200** — `{ "message": "If an account exists for that email, a reset link is on its way." }`, whether or not the account exists. A failed send is logged, not reported.
+- **429** — more than 3 requests for the same email in an hour. Counted before the account lookup, so unknown emails are limited the same way.
+- **400** — validation failed (not an email)
+
+## `POST /api/auth/reset-password`
+
+Body: `{ "token": string, "password": string (min 8) }`. No auth, no CSRF: the token is the credential.
+
+- **200** — `{ "message": "Password updated. Log in with your new password." }`. The token is used up (atomically, so two racing requests can't both win), and the user's `tokenVersion` is bumped, so every existing session's refresh token stops working; access tokens expire within ~15 min. Also clears this browser's auth cookies. The user is **not** logged in.
+- **400** — `{ "error": "This reset link is invalid or has expired. Request a new one." }` for an unknown, used, superseded or expired token; or a validation failure (e.g. a short password), which does not use the token up
+
 ## `POST /api/auth/refresh`
 
 No body. Reads `refreshToken` cookie, requires `X-CSRF-Token`.
