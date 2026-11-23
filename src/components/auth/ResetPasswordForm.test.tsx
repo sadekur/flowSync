@@ -37,9 +37,8 @@ describe("ResetPasswordForm", () => {
     renderWithStore(<ResetPasswordForm />);
 
     await screen.findByLabelText("New password");
-    // Stripped a tick later, after the router's own history sync.
-    await waitFor(() => expect(window.location.hash).toBe(""));
-    expect(window.location.pathname).toBe("/reset-password");
+    // The token leaves the address bar through the Next.js router.
+    expect(replace).toHaveBeenCalledWith("/reset-password", { scroll: false });
 
     await fill("brand-new-pass");
     expect(apiFetch).toHaveBeenCalledWith("/api/auth/reset-password", {
