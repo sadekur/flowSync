@@ -49,6 +49,7 @@ cp .env.example .env    # fill in real values (JWT secrets, DB URIs)
 | `npm run build:backend` | Compiles every `backend/src/**/*.ts` to `backend/dist` (no tsconfig.json — flags on the `tsc` CLI) |
 | `npm run lint:frontend` | ESLint on `src/` |
 | `npm run typecheck:backend` | Same file-discovery + flags, with `--noEmit` |
+| `npm test` | All tests (Vitest). Backend tests need local MongoDB + Redis and use their own `flowsync_test` DB / Redis DB 15 — never `.env`'s database. `test:backend`, `test:frontend`, `test:watch` also exist |
 
 ## Status
 
