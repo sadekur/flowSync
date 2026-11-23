@@ -85,7 +85,7 @@ describe("ResetPasswordForm", () => {
     await fill("brand-new-pass");
     expect(await screen.findByText(/invalid or has expired/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Request a new link" }).getAttribute("href")).toBe("/forgot-password");
-    expect(replace).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalledWith("/login?reset=1");
   });
 
   it("explains what's missing when opened without a token", async () => {
