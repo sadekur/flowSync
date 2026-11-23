@@ -134,8 +134,10 @@ export function createSocketMiddleware(): Middleware<SocketDispatchExt> {
       if (socket) return socket;
 
       // withCredentials sends the httpOnly auth cookies with the handshake —
-      // that's how the server authenticates this connection.
-      socket = io(SOCKET_URL, { withCredentials: true, autoConnect: false });
+      // that's how the server authenticates this connection. WebSocket only:
+      // Vercel Functions can't serve Socket.IO's HTTP long-polling, and
+      // skipping it also removes the need for sticky sessions behind Nginx.
+      socket = io(SOCKET_URL, { withCredentials: true, autoConnect: false, transports: ["websocket"] });
 
       socket.on("connect", () => {
         store.dispatch(connected());
