@@ -271,7 +271,8 @@
       - validate `SMTP_URL` before use (`smtpUrlProblem`)
       - scrub the URL and password from every mail error (`redactSmtpSecrets`)
     - The key has to be rotated in Brevo by the user, then `SMTP_URL` re-entered.
-  - Pending: a real delivery through Brevo after the key rotation.
+  - The fix is shipped (`release` at `8ca870a`, production health ok).
+  - Pending: the user rotates the Brevo key and re-enters `SMTP_URL`; then a real delivery test.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
