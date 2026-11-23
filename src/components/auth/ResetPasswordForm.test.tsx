@@ -43,6 +43,7 @@ describe("ResetPasswordForm", () => {
       body: JSON.stringify({ token: "abc_123-XYZ", password: "brand-new-pass" }),
     });
     await waitFor(() => expect(push).toHaveBeenCalledWith("/login?reset=1"));
+    expect(refresh).toHaveBeenCalled();
   });
 
   it("catches mismatched passwords without calling the API", async () => {
