@@ -186,4 +186,28 @@
 - **The task catch-up replaces the list instead of merging, but protects live events.** The merge never removed a task deleted while the tab was disconnected or away from the project. It could also bring back a task a live `task:deleted` had just removed, or overwrite a live edit with a stale copy, if the event beat the fetch's response. The catch-up now runs in two halves. `tasksSyncStarted` (dispatched as the fetch starts) begins recording the ids of every live upsert or removal. `tasksSynced` then replaces the store with the fetched list (it's the full set, not a page), except for the recorded ids, which keep their current live state, present or absent. An id-set rather than timestamps was used because a task's `updatedAt` can't tell a deletion apart, and the server clock isn't the client's. The server-rendered hydrate still merges: the catch-up right after the join reconciles it.
 - **Node pinned to `24.x` in `engines`.** `>=20` let Vercel pick the newest major on its own, which it had warned it would do. 24 is the version dev, the Dockerfile and Vercel already run.
 
+## Email system, part 1: mailer + password reset
+
+The email system is built in three parts, each paused for review: password reset, then email verification, then workspace invites. Unverified accounts will only get a banner, never a lockout (user's choice).
+
+- **Providers: Mailtrap's sandbox in dev, Resend in production, one SMTP code path.** `utils/mailer.ts` uses nodemailer (10.4.0, pinned) with `SMTP_URL`, or with Resend's SMTP relay when only `RESEND_API_KEY` is set (`smtps://resend:<key>@smtp.resend.com:465`).
+  - Resend is the only email provider on the Vercel Marketplace, and installing it sets `RESEND_API_KEY` in Vercel by itself.
+  - Mailtrap (the user's suggestion) catches every email in a web inbox and delivers none. Dev can therefore use made-up addresses, which invites will need.
+  - With neither configured, dev prints the email to the backend console. Production throws instead: an email carries a live token and must never land in logs.
+  - Tests capture mail in `testOutbox`. The test setup blanks `SMTP_URL` / `RESEND_API_KEY`, so `.env`'s real settings can never reach a test.
+- **Link base URL from config, never from the request.** `appUrl` resolves in this order: `APP_URL`, then `CORS_ORIGIN` (dev), then Vercel's system variables (the production domain in production, the deployment's own URL in a preview). Building it from the `Host` header would allow host-header poisoning: a forged `Host` mails the victim a real token pointing at an attacker's site.
+- **Token handling:**
+  - 32 random bytes, base64url. Only the sha256 is stored, in an `AuthToken` collection (with a `purpose`, so email verification can reuse it).
+  - A TTL index deletes expired tokens. Lookups still check `expiresAt`, because the TTL monitor runs about once a minute.
+  - Redeeming a token is an atomic `findOneAndDelete`, so it's single-use even under a race.
+  - A new request deletes the user's previous reset tokens.
+  - The token goes in the URL **fragment** (`/reset-password#token=…`). Browsers never send a fragment to any server, so it stays out of Vercel's request logs, proxies and `Referer` headers. The page then strips it from the address bar with `history.replaceState`.
+- **A reset signs out every session.** It bumps `tokenVersion`, the hook `User` has carried since Step 3, so every refresh token dies. Access tokens are stateless and live out their ~15 min, and a connected socket stays up until it reconnects (the same accepted limit as logout, see Step 6). The reset doesn't log the user in: they log in with the new password, which proves they know it.
+- **Enumeration: same answer, 429 before lookup, timing not hidden.**
+  - `forgot-password` always answers 200 with the same message.
+  - The per-email limit (3/hour, Redis) runs before the account lookup, so a 429 reveals nothing either.
+  - The extra time a real send takes isn't masked: registration's 409 already tells anyone whether an email is taken, so hiding it here would add complexity without closing anything.
+  - A failed send is logged, not reported, so a 500 can't reveal existence either.
+- **No CSRF on these two routes.** No session is involved, and the reset token is itself the credential. A forged cross-site `forgot-password` can at most send the owner a reset email they didn't ask for, and the rate limit caps that.
+
 Full step-by-step build plan lives in `PLANNING.md`.
