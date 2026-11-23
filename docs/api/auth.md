@@ -4,7 +4,7 @@
 
 ## CSRF
 
-`POST /api/auth/refresh` and `POST /api/auth/logout` require header `X-CSRF-Token` to match the `csrfToken` cookie value, or they respond **403**. `register`/`login` are exempt — no session exists yet for a forged cross-site request to ride along on. This same `requireCsrf` middleware (`backend/src/middleware/csrf.ts`) is intended for reuse on future state-changing routes (workspaces/projects/tasks, Step 4+).
+`POST /api/auth/refresh` and `POST /api/auth/logout` require header `X-CSRF-Token` to match the `csrfToken` cookie value, or they respond **403**. `register`/`login`/`forgot-password`/`reset-password` are exempt — no session exists yet for a forged cross-site request to ride along on. This same `requireCsrf` middleware (`backend/src/middleware/csrf.ts`) is intended for reuse on future state-changing routes (workspaces/projects/tasks, Step 4+).
 
 ## `POST /api/auth/register`
 
