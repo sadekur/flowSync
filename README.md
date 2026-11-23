@@ -51,6 +51,20 @@ cp .env.example .env    # fill in real values (JWT secrets, DB URIs)
 | `npm run typecheck:backend` | Same file-discovery + flags, with `--noEmit` |
 | `npm test` | All tests (Vitest). Backend tests need local MongoDB + Redis and use their own `flowsync_test` DB / Redis DB 15 — never `.env`'s database. `test:backend`, `test:frontend`, `test:watch` also exist |
 
+## Deploy (Vercel)
+
+Live: **https://flowsync-eight.vercel.app**. One Vercel project with two services (Next.js + Express/Socket.IO), configured in `vercel.json`.
+
+| What | Command |
+|---|---|
+| **Ship to production** | `git push origin master:release`. Only the `release` branch auto-deploys; pushes to `master` never do |
+| **Roll back** to the previous production deploy (instant, no rebuild) | `npx vercel@65.12.1 rollback` |
+| Check the live site | `curl https://flowsync-eight.vercel.app/api/health` |
+| Read production logs | `npx vercel@65.12.1 logs --environment production` |
+| Manual deploy (fallback) | `npx vercel@65.12.1 deploy --prod` |
+
+Always work on `master`; never check out `release` and edit there, because every auto-committed save would deploy. Use `npx vercel@65.12.1`: older global CLIs don't support this two-service setup.
+
 ## Status
 
 Under active step-by-step build — see `PROGRESS.md` for what's done and what's next.
