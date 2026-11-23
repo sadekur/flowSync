@@ -201,7 +201,13 @@ The email system is built in three parts, each paused for review: password reset
   - A TTL index deletes expired tokens. Lookups still check `expiresAt`, because the TTL monitor runs about once a minute.
   - Redeeming a token is an atomic `findOneAndDelete`, so it's single-use even under a race.
   - A new request deletes the user's previous reset tokens.
-  - The token goes in the URL **fragment** (`/reset-password#token=…`). Browsers never send a fragment to any server, so it stays out of Vercel's request logs, proxies and `Referer` headers. The page then strips it from the address bar with `history.replaceState`.
+  - The token goes in the URL **fragment** (`/reset-password#token=…`). Browsers never send a fragment to any server, so it stays out of Vercel's request logs, proxies and `Referer` headers.
+  - The page strips the token from the address bar through the Next.js router (`router.replace(pathname)`) on the **first focus into the form**, not on mount. The browser check showed why:
+    - The router rewrites the URL from its own state while it starts up. A hash stripped on mount came straight back, whether through `window.history.replaceState` or `router.replace`.
+    - Once the page is interactive, the strip sticks and the form keeps its state.
+    - After a successful reset, `router.replace("/login?reset=1")` replaces that history entry, so Back can't return to it.
+  - The token is read in an effect that keeps any token an earlier run already took. React Strict Mode (dev) runs effects twice, and the second run used to overwrite the token with "none". The browser caught this, not the unit test: React only double-runs effects when `<StrictMode>` is outermost, as Next.js places it, and not when it's nested inside the store `<Provider>`. The regression test now renders it outermost.
+- **Show/hide toggle on every password field** (user request): `components/auth/PasswordInput.tsx` is used by login, register and both reset fields. It's a real `type="button"`, so it never submits the form. Its `aria-label` says what it will do ("Show password" / "Hide password"), and `aria-pressed` gives its state.
 - **A reset signs out every session.** It bumps `tokenVersion`, the hook `User` has carried since Step 3, so every refresh token dies. Access tokens are stateless and live out their ~15 min, and a connected socket stays up until it reconnects (the same accepted limit as logout, see Step 6). The reset doesn't log the user in: they log in with the new password, which proves they know it. The response clears this browser's cookies only when they belong to the reset account. The first version cleared them unconditionally, and the live check showed what that means: opening the link in a browser logged in as someone else logged *them* out.
 - **Enumeration: same answer, 429 before lookup, timing not hidden.**
   - `forgot-password` always answers 200 with the same message.
