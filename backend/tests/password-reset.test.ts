@@ -106,6 +106,19 @@ describe("POST /api/auth/reset-password", () => {
     expect(again.body.error).toMatch(/invalid or has expired/);
   });
 
+  it("leaves a different account's session in the same browser alone", async () => {
+    const alice = await registerUser(server.url, "Alice");
+    const bob = await registerUser(server.url, "Bob");
+    await requestReset(alice.email);
+
+    // Bob's browser opens Alice's link (a shared machine).
+    const res = await bob.client.post("/api/auth/reset-password", { token: tokenFromOutbox(alice.email), password: "brand-new-pass" });
+    expect(res.status).toBe(200);
+    expect(res.setCookies).toHaveLength(0);
+    expect((await bob.client.get("/api/auth/me")).body.user.email).toBe(bob.email);
+    expect((await bob.client.post("/api/auth/refresh")).status).toBe(200);
+  });
+
   it("only the newest link works", async () => {
     const alice = await registerUser(server.url, "Alice");
     await requestReset(alice.email);
