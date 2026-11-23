@@ -24,9 +24,9 @@ const tasksSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
-    // Server-fetched list: the initial page render, and the catch-up fetch on
-    // every (re)join. Merging when it's the same project keeps a live event
-    // that raced the fetch from being clobbered; switching projects replaces.
+    // The server-rendered page. Merging when it's the same project keeps live
+    // state the store already has; switching projects replaces. Deletions are
+    // reconciled by the catch-up below, which runs right after the join.
     tasksHydrated(state, action: PayloadAction<{ projectId: string; tasks: Task[] }>) {
       const { projectId, tasks } = action.payload;
       if (state.projectId === projectId) {
@@ -35,6 +35,26 @@ const tasksSlice = createSlice({
       }
       tasksAdapter.setAll(state, tasks);
       state.projectId = projectId;
+      state.syncTouched = null;
+    },
+    // The catch-up on every (re)join, in two halves around the fetch.
+    tasksSyncStarted(state, action: PayloadAction<{ projectId: string }>) {
+      if (state.projectId !== action.payload.projectId) return;
+      state.syncTouched = {};
+    },
+    // The fetched list is the full set (it isn't paged), so it replaces the
+    // store: that drops tasks deleted while this tab was out of the room.
+    // Tasks a live event touched mid-fetch keep their live state instead,
+    // since the fetch may have been served before that event.
+    tasksSynced(state, action: PayloadAction<{ projectId: string; tasks: Task[] }>) {
+      const { projectId, tasks } = action.payload;
+      if (state.projectId !== projectId || !state.syncTouched) return;
+      const touched = state.syncTouched;
+      const keep = Object.keys(touched)
+        .map((id) => state.entities[id])
+        .filter((task): task is Task => task !== undefined);
+      tasksAdapter.setAll(state, [...tasks.filter((t) => !touched[t._id]), ...keep]);
+      state.syncTouched = null;
     },
     // `task:created` / `task:updated` broadcasts, plus a mutation's own REST
     // response so the actor sees the change before the broadcast lands.
@@ -42,10 +62,12 @@ const tasksSlice = createSlice({
     taskUpserted(state, action: PayloadAction<{ projectId: string; task: Task }>) {
       if (state.projectId !== action.payload.projectId) return;
       tasksAdapter.upsertOne(state, action.payload.task);
+      if (state.syncTouched) state.syncTouched[action.payload.task._id] = true;
     },
     taskRemoved(state, action: PayloadAction<{ projectId: string; taskId: string }>) {
       if (state.projectId !== action.payload.projectId) return;
       tasksAdapter.removeOne(state, action.payload.taskId);
+      if (state.syncTouched) state.syncTouched[action.payload.taskId] = true;
     },
   },
   extraReducers: (builder) => {
