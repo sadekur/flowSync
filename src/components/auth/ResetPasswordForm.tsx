@@ -48,9 +48,10 @@ export function ResetPasswordForm() {
         method: "POST",
         body: JSON.stringify({ token, password }),
       });
-      // The reset signed out every session, this browser's included.
-      dispatch(setUser(null));
+      // If this browser was logged in as the same account, the API just
+      // cleared its cookies; refresh so the store hydrates from that.
       router.push("/login?reset=1");
+      router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
       setPending(false);
