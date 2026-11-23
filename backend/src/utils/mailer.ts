@@ -15,22 +15,13 @@ export interface MailMessage {
  */
 export const testOutbox: MailMessage[] = [];
 
-// One SMTP path for every provider: Mailtrap's sandbox (dev) through SMTP_URL,
-// Resend (production) through its SMTP relay with the API key as password.
-function smtpUrl(): string | undefined {
-  if (env.SMTP_URL) return env.SMTP_URL;
-  if (env.RESEND_API_KEY) {
-    return `smtps://resend:${encodeURIComponent(env.RESEND_API_KEY)}@smtp.resend.com:465`;
-  }
-  return undefined;
-}
-
+// One SMTP path for every provider: Mailtrap's sandbox in dev, Brevo's relay
+// in production. Swapping providers is a SMTP_URL change, not a code change.
 let transporter: Transporter | null | undefined;
 
 function getTransporter(): Transporter | null {
   if (transporter === undefined) {
-    const url = smtpUrl();
-    transporter = url ? nodemailer.createTransport(url) : null;
+    transporter = env.SMTP_URL ? nodemailer.createTransport(env.SMTP_URL) : null;
   }
   return transporter;
 }
