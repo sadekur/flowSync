@@ -2,17 +2,23 @@
 
 **Implemented:** connection, auth and project rooms (Step 6); chat (Step 7); typing & presence (Step 8); task updates (Step 9); notifications (Step 10).
 
-Same host/port as the REST API (`NEXT_PUBLIC_SOCKET_URL`, default `http://localhost:4000`), default path `/socket.io/`. Event types: `backend/src/sockets/types.ts`, mirrored by hand in `src/types/socket.ts`.
+Same host/port as the REST API, default path `/socket.io/`:
+- **Dev:** `NEXT_PUBLIC_SOCKET_URL` (`http://localhost:4000`).
+- **Same-origin deploys** (Vercel, docker-compose + Nginx): `NEXT_PUBLIC_SOCKET_URL` is unset and the client connects to the page's own origin, whose `/socket.io/` is routed to the backend.
+
+Event types: `backend/src/sockets/types.ts`, mirrored by hand in `src/types/socket.ts`.
 
 ## Connecting
 
 ```ts
-io(NEXT_PUBLIC_SOCKET_URL, { withCredentials: true })
+io(NEXT_PUBLIC_SOCKET_URL || undefined, { withCredentials: true, transports: ["websocket"] })
 ```
+
+**WebSocket only.** Vercel Functions can't serve Socket.IO's HTTP long-polling, and skipping it means no sticky sessions behind a load balancer. The server still accepts polling, which tests use.
 
 The handshake is accepted only when **both**:
 
-1. **`Origin` header is exactly `CORS_ORIGIN`.** Checked in `allowRequest` for polling *and* WebSocket transports. A missing or foreign Origin is rejected with HTTP `403` before auth runs.
+1. **The `Origin` header is the frontend's.** That means either exactly `CORS_ORIGIN` (dev, where the frontend and API are different origins), or the host the request was sent to (same-origin deploys, using `X-Forwarded-Host` when a proxy is in front). It's checked in `allowRequest` (`isAllowedOrigin`) for polling *and* WebSocket transports. A missing or foreign Origin is rejected with HTTP `403` before auth runs. A browser can't forge either side of the same-origin comparison on a handshake, so a page on another site always fails it.
 2. **The `accessToken` httpOnly cookie holds a valid access JWT.** This is the same cookie and check as `requireAuth` on the REST side. On failure the client gets `connect_error` with one of:
    - `"Not authenticated"`: no cookie
    - `"Invalid or expired access token"`
