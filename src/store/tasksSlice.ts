@@ -75,7 +75,7 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { tasksHydrated, taskUpserted, taskRemoved } = tasksSlice.actions;
+export const { tasksHydrated, tasksSyncStarted, tasksSynced, taskUpserted, taskRemoved } = tasksSlice.actions;
 
 export const { selectAll: selectAllTasks } = tasksAdapter.getSelectors((state: RootState) => state.tasks);
 
