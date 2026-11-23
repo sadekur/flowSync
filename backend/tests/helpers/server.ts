@@ -27,9 +27,7 @@ export async function startTestServer(): Promise<TestServer> {
   await mongoose.connection.syncIndexes();
   await redis.flushdb();
 
-  const httpServer = http.createServer(createApp());
-  const io = createSocketServer(httpServer);
-  setIo(io);
+  const { httpServer, io } = createHttpServer();
   await new Promise<void>((resolve) => httpServer.listen(0, "127.0.0.1", resolve));
   const { port } = httpServer.address() as AddressInfo;
 
