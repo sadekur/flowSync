@@ -98,7 +98,7 @@ describe("POST /api/auth/reset-password", () => {
     expect((await login(alice, "brand-new-pass")).status).toBe(200);
 
     // Her other session can no longer refresh.
-    expect((await otherDevice!.post("/api/auth/refresh")).status).toBe(401);
+    expect((await otherDevice.post("/api/auth/refresh")).status).toBe(401);
 
     // Single use.
     const again = await anonymous().post("/api/auth/reset-password", { token, password: "another-pass-1" });
