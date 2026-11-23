@@ -24,7 +24,9 @@ import {
   userOffline,
 } from "./presenceSlice";
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL as string;
+// Unset/empty in same-origin deploys: io() then connects to the page's own
+// origin, whose /socket.io/ is routed to the backend.
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || undefined;
 const SEND_TIMEOUT_MS = 10_000;
 // Client-side typing throttle: at most one `typing:start` per interval per
 // project, and a `typing:stop` this long after the last keystroke. The
