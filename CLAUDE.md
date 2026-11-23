@@ -33,7 +33,9 @@ flowSync/
 │   ├── config/                  # env.ts (dotenv+zod), db.ts (Mongoose), redis.ts (ioredis)
 │   ├── controllers/, models/, routes/, services/, middleware/, validators/, utils/, types/
 │   └── sockets/handlers/        # Socket.IO event handlers (added from Step 6 onward)
-├── backend/tests/
+├── backend/tests/               # Vitest: setup/env.ts (test DB guard), helpers/ (server, api client, sockets), *.test.ts
+├── src/test/                    # frontend test helpers: fakeSocket.ts, factories.ts, render.tsx (component tests sit next to the code as *.test.tsx)
+├── vitest.config.mts            # two projects: backend (node, files serial) + frontend (jsdom)
 └── docs/api/                    # one .md per REST endpoint
 ```
 
