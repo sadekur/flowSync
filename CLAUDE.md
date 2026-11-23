@@ -71,7 +71,11 @@ Run from the repo root.
 
 There is no `lint:backend` or `typecheck:frontend`. For the frontend (and its `*.test.tsx`), use `npx tsc --noEmit -p tsconfig.json`. `typecheck:backend` covers only `backend/src`, not `backend/tests`.
 
-**Deploying (Vercel project `sadekurs-projects/flowsync`, linked in `.vercel/`; CLI deploys only, not connected to GitHub):**
+**Deploying (Vercel project `sadekurs-projects/flowsync`, linked in `.vercel/`, connected to GitHub):**
+- **Production deploys only from the `release` branch.** Run `git push origin master:release`, and production updates by itself.
+- Every other branch is excluded by `git.deploymentEnabled: {"**": false, "release": true}` in `vercel.json`, so the auto-commit pushes to `master` never deploy.
+- Never check out `release` and edit there: the auto-commit tool would deploy every save.
+- Manual CLI deploys still work as a fallback:
 - Use `npx vercel@65.12.1 …`, not the older global CLI, which predates Services.
 - `vercel build --prod` reproduces the cloud build locally, and is the quickest check that `vercel.json` and the API entry still bundle.
 - Then deploy with `vercel deploy --prod`.

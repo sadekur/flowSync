@@ -220,9 +220,14 @@
   - Cleanup: both `s13test-*` users deleted from Atlas by exact prefix (2 matched, 0 left over). The user's own data was untouched.
   - Browser: production `/register` renders with no console errors, and `/api/health` reads ok
   - Profile README (`sadekur/sadekur`) now links the live demo
+- [x] Auto-deploy (added after Step 13, user request):
+  - The GitHub repo is connected (user installed the Vercel GitHub app), and the Production Branch is set to `release` in the dashboard.
+  - `vercel.json` has `git.deploymentEnabled: {"**": false, "release": true}`.
+  - `MONGO_URI` was added for previews by the user, and a preview deploy (`flowsync-3si0lyj42`) answered `ok`.
+  - Verified with an empty commit `55b39e7`: pushed to `master`, no deployment after 45 s; pushed to `release`, a production deployment, Ready, with live health ok.
+  - How to ship: `git push origin master:release`.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
-  - Optionally, `MONGO_URI` for the preview environment
   - Running `docker compose up` once Docker is installed
 
 ## Next Steps
