@@ -165,17 +165,24 @@ describe("server side of a reconnect", () => {
 describe("socketMiddleware against the real server", () => {
   let f: Fixture;
 
-  function createBrowserStore(cookie: string): { store: AppStore; statuses: SocketStatus[] } {
+  /**
+   * A store wired like the browser's, plus a log of every socket.status and
+   * joinedProjectId transition. Reconnects take ~50 ms here, so the brief
+   * "not in the room" state can fall between two polls; the log can't miss it.
+   */
+  function createBrowserStore(cookie: string) {
     browser.url = server.url;
     browser.headers = { cookie, origin: FRONTEND_ORIGIN };
     const store = makeStore();
     stores.push(store);
-    const statuses: SocketStatus[] = [];
+    const statuses: SocketStatus[] = [store.getState().socket.status];
+    const joins: (string | null)[] = [store.getState().socket.joinedProjectId];
     store.subscribe(() => {
-      const status = store.getState().socket.status;
+      const { status, joinedProjectId } = store.getState().socket;
       if (statuses.at(-1) !== status) statuses.push(status);
+      if (joins.at(-1) !== joinedProjectId) joins.push(joinedProjectId);
     });
-    return { store, statuses };
+    return { store, statuses, joins };
   }
 
   beforeEach(async () => {
@@ -202,7 +209,7 @@ describe("socketMiddleware against the real server", () => {
       expect(store.getState().socket.status).toBe("connected");
       expect(store.getState().socket.joinedProjectId).toBe(projectId);
     });
-    expect(statuses).toEqual(["connecting", "connected", "reconnecting", "connected"]);
+    expect(statuses).toEqual(["idle", "connecting", "connected", "reconnecting", "connected"]);
 
     // Proof the room really was re-joined server-side: live chat and task
     // events reach the store.
@@ -218,16 +225,18 @@ describe("socketMiddleware against the real server", () => {
   });
 
   it("re-joins after every drop, not just the first", async () => {
-    const { store } = createBrowserStore(f.member.client.cookieHeader);
+    const { store, joins } = createBrowserStore(f.member.client.cookieHeader);
+    const projectId = f.project._id;
     store.dispatch(socketConnect());
-    store.dispatch(joinProject(f.project._id));
-    await vi.waitFor(() => expect(store.getState().socket.joinedProjectId).toBe(f.project._id));
+    store.dispatch(joinProject(projectId));
+    await vi.waitFor(() => expect(joins).toEqual([null, projectId]));
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 1; i <= 3; i++) {
       dropConnections(f.member.id);
-      await vi.waitFor(() => expect(store.getState().socket.joinedProjectId).toBeNull());
-      await vi.waitFor(() => expect(store.getState().socket.joinedProjectId).toBe(f.project._id));
+      // Each drop: out of the room, then back in by itself.
+      await vi.waitFor(() => expect(joins.filter((id) => id === projectId)).toHaveLength(i + 1));
     }
+    expect(joins).toEqual([null, projectId, null, projectId, null, projectId, null, projectId]);
     const watcher = await connect(server.url, f.owner);
     const snapshot = await join(watcher, f.project._id);
     // Exactly one live socket for the member after three drops.
