@@ -4,7 +4,11 @@
 
 ## CSRF
 
-`POST /api/auth/refresh` and `POST /api/auth/logout` require header `X-CSRF-Token` to match the `csrfToken` cookie value, or they respond **403**. `register`/`login`/`forgot-password`/`reset-password` are exempt — no session exists yet for a forged cross-site request to ride along on. This same `requireCsrf` middleware (`backend/src/middleware/csrf.ts`) is intended for reuse on future state-changing routes (workspaces/projects/tasks, Step 4+).
+`POST /api/auth/refresh`, `POST /api/auth/logout` and `POST /api/auth/resend-verification` require header `X-CSRF-Token` to match the `csrfToken` cookie value, or they respond **403**. `register`/`login`/`forgot-password`/`reset-password`/`verify-email` are exempt — no session is involved for a forged cross-site request to ride along on (the emailed links' token is the credential).
+
+## The user object
+
+Every `{ "user": {...} }` below is the profile: `_id`, `name`, `email`, `tokenVersion`, `emailVerifiedAt` (ISO date, or `null` until the email is verified), `createdAt`, `updatedAt`. Never `passwordHash`. An unverified account can do everything a verified one can; the app only shows a banner. This same `requireCsrf` middleware (`backend/src/middleware/csrf.ts`) is intended for reuse on future state-changing routes (workspaces/projects/tasks, Step 4+).
 
 ## `POST /api/auth/register`
 
