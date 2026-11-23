@@ -12,11 +12,16 @@ import { createHttpServer } from "./httpServer";
 // connections are opened once per instance, at module load. Requests that
 // arrive first don't fail: Mongoose buffers queries until it's connected, and
 // ioredis queues commands (adapter subscriptions included) the same way.
-const { httpServer, io } = createHttpServer();
-
+//
+// Order matters: connect() must run before createHttpServer(). The Redis
+// adapter subscribes as soon as it's created, which makes a lazyConnect
+// client start connecting by itself — an explicit connect() after that is
+// rejected ("Redis is already connecting/connected").
 Promise.all([connectRedis(), connectDB()]).catch((err) => {
   logger.error("Startup connection failed", err);
 });
+
+const { httpServer, io } = createHttpServer();
 
 // Scale-down: close sockets (clients reconnect to another instance and
 // re-join, see socketMiddleware) and the store connections.
