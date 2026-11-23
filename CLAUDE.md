@@ -99,6 +99,7 @@ zod `safeParse` the payload → `isRateLimited(key, limit, windowSeconds)` (`uti
 - "Doesn't exist" and "not a member" get the same response (`Project not found`), so ids can't be probed.
 - Broadcasts use namespace-level emit, so the sender's own tabs receive the event too. The client dedupes against the ack by `_id`.
 - Socket handlers accept ObjectIds only, not slugs.
+- Not every real-time event starts on a socket. Task create/update/delete are REST writes. `task.controller.ts` and `notification.service.ts` broadcast them through `sockets/emitter.ts` (`emitTaskCreated`, `emitNotification`, …). That module holds `io`, which `server.ts` registers with `setIo()` once the socket server exists, and it is `null` before then and after shutdown, so the broadcast is silently skipped. `task:*` payloads are the task's Mongoose `toJSON` (the same shape as the REST response), not a hand-written DTO. Notifications go to the per-user room `userRoom(id)`, which every socket joins at connection (`sockets/index.ts`), not to a project room.
 - Services return explicit DTOs (e.g. `MessageDto`). Frontend copies of these shapes live in `src/types/api.ts` and `src/types/socket.ts` and are kept in sync by hand. Update both sides together.
 
 ### Frontend ↔ API
