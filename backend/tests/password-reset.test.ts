@@ -85,17 +85,20 @@ describe("POST /api/auth/reset-password", () => {
     await requestReset(alice.email);
     const token = tokenFromOutbox(alice.email);
 
-    const browser = anonymous();
-    const res = await browser.post("/api/auth/reset-password", { token, password: "brand-new-pass" });
+    // Alice's other session (another device), from before the reset.
+    const otherDevice = (await login(alice, alice.password)).status === 200 ? new TestClient(server.url) : null;
+    await otherDevice?.post("/api/auth/login", { email: alice.email, password: alice.password });
+
+    // Reset from the browser she's logged in on: its cookies are cleared.
+    const res = await alice.client.post("/api/auth/reset-password", { token, password: "brand-new-pass" });
     expect(res.status).toBe(200);
-    // Clears this browser's auth cookies.
     expect(res.setCookies.some((c) => c.startsWith("refreshToken=;"))).toBe(true);
 
     expect((await login(alice, alice.password)).status).toBe(401);
     expect((await login(alice, "brand-new-pass")).status).toBe(200);
 
-    // Alice's session from before the reset can no longer refresh.
-    expect((await alice.client.post("/api/auth/refresh")).status).toBe(401);
+    // Her other session can no longer refresh.
+    expect((await otherDevice!.post("/api/auth/refresh")).status).toBe(401);
 
     // Single use.
     const again = await anonymous().post("/api/auth/reset-password", { token, password: "another-pass-1" });
