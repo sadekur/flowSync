@@ -26,7 +26,7 @@ import { userRoom, type IoServer } from "./types";
  */
 export function isAllowedOrigin(origin: string | undefined, headers: http.IncomingHttpHeaders): boolean {
   if (!origin) return false;
-  if (origin === env.CORS_ORIGIN) return true;
+  if (env.CORS_ORIGIN && origin === env.CORS_ORIGIN) return true;
 
   const forwarded = headers["x-forwarded-host"];
   const host = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim() || headers.host;
