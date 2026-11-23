@@ -8,11 +8,11 @@
 // backend/tests/reconnect.test.ts; this one is for the cases that are hard to
 // produce on demand there (stale acks, timeouts, typing throttles).
 
-type Handler = (...args: any[]) => void;
+type Handler = (...args: unknown[]) => void;
 
 export interface Emitted {
   event: string;
-  payload: any;
+  payload: unknown;
   /** Answers the emit as the server would: `{ ok: true, ... }` or `{ ok: false, error }`. */
   ack: (response: unknown) => void;
   /** Only for emits made through `socket.timeout(ms)`: fires the timeout error. */
@@ -55,7 +55,8 @@ export class FakeSocket {
     return this;
   }
 
-  timeout(_ms: number) {
+  // The real one takes the timeout in ms; tests fire it themselves via timeOut().
+  timeout() {
     return {
       emit: (event: string, payload: unknown, callback: (err: Error | null, response?: unknown) => void) => {
         this.emitted.push({
