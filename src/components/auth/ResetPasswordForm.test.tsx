@@ -8,9 +8,9 @@ import { ResetPasswordForm } from "./ResetPasswordForm";
 import { apiFetch, ApiError } from "@/lib/client-api";
 import { renderWithStore } from "@/test/render";
 
-const push = vi.fn();
+const replace = vi.fn();
 const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, refresh }) }));
 vi.mock("@/lib/client-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/client-api")>()),
   apiFetch: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("@/lib/client-api", async (importOriginal) => ({
 
 beforeEach(() => {
   vi.mocked(apiFetch).mockReset();
-  push.mockReset();
+  replace.mockReset();
 });
 afterEach(() => {
   window.history.replaceState(null, "", "/");
@@ -45,7 +45,7 @@ describe("ResetPasswordForm", () => {
       method: "POST",
       body: JSON.stringify({ token: "abc_123-XYZ", password: "brand-new-pass" }),
     });
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/login?reset=1"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?reset=1"));
     expect(refresh).toHaveBeenCalled();
   });
 
@@ -85,7 +85,7 @@ describe("ResetPasswordForm", () => {
     await fill("brand-new-pass");
     expect(await screen.findByText(/invalid or has expired/)).toBeTruthy();
     expect(screen.getByRole("link", { name: "Request a new link" }).getAttribute("href")).toBe("/forgot-password");
-    expect(push).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("explains what's missing when opened without a token", async () => {
