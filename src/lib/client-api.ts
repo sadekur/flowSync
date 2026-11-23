@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL as string;
+// Empty in same-origin deploys (Vercel, Docker+Nginx): requests go to the
+// page's own origin, e.g. `/api/auth/me`. Dev sets http://localhost:4000.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export interface ApiValidationIssue {
   path: string;
