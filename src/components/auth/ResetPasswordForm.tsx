@@ -85,10 +85,9 @@ export function ResetPasswordForm() {
         <label htmlFor="password" className="text-sm font-medium">
           New password
         </label>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={MIN_PASSWORD_LENGTH}
@@ -102,10 +101,9 @@ export function ResetPasswordForm() {
         <label htmlFor="confirm" className="text-sm font-medium">
           Confirm new password
         </label>
-        <input
+        <PasswordInput
           id="confirm"
           name="confirm"
-          type="password"
           autoComplete="new-password"
           required
           value={confirm}
