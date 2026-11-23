@@ -112,7 +112,8 @@ Browser → Next.js (Server + Client Components) → Express API + Socket.IO →
   - **Tests:** mail is captured in `testOutbox`; read links from there.
   - **Templates** live in `utils/emails.ts`.
   - **Links** are built from `appUrl` (`config/env.ts`), never from the request's `Host`.
-  - **Emailed tokens** are stored only as sha256 (`models/AuthToken.ts`), redeemed with an atomic `findOneAndDelete`, and sent in the URL fragment (`#token=`).
+  - **Emailed tokens** (reset, verification) are stored only as sha256 (`models/AuthToken.ts`), with a `purpose` that every redeem filters on. They are issued and redeemed through the helpers in `auth.service.ts` (redeeming is an atomic `findOneAndDelete`) and sent in the URL fragment (`#token=`), which pages read with `src/lib/useHashToken.ts`.
+  - **Email verification** is a banner (`EmailVerificationBanner`), never a lockout: don't gate API access on `emailVerifiedAt`.
 - **`http.createServer(app)`** is used in `server.ts` instead of `app.listen()` directly specifically so Socket.IO can attach to the same server later without touching that file.
 
 ### Backend request pipeline
