@@ -301,6 +301,10 @@
     - `/me` then had a date, and resend got 400 "already verified".
     - No app console errors; the only one is the Grammarly hydration warning on `<body>`.
     - Cleanup: the user deleted from Atlas (its token was already used up).
+  - **Shipped** (`release` at `e9a773d`; the local `vercel build --prod` passed first). On production:
+    - health ok; `/verify-email` 200, rendering the no-token message in the browser with no console errors
+    - `verify-email` gives 400 for a made-up or missing token; `resend-verification` gives 401 without a session
+    - No throwaway account was registered there: it would send a real Brevo email to a dead address and hurt the sender's reputation.
   - **Pending for the user:** the banner needs a login, so browser automation can't show it. Log in to see it (existing accounts start unverified), use **Resend email**, and click the link.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
