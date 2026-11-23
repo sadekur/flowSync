@@ -3,6 +3,8 @@ export interface User {
   name: string;
   email: string;
   tokenVersion: number;
+  // null until the user clicks the link in a verification (or reset) email.
+  emailVerifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
