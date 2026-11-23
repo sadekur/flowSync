@@ -69,3 +69,17 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProduction = env.NODE_ENV === "production";
+
+// Base URL for links in emails, without a trailing slash. On Vercel, production
+// links use the stable production domain and previews their own deployment URL.
+export const appUrl: string | undefined = (() => {
+  const url =
+    env.APP_URL ??
+    env.CORS_ORIGIN ??
+    (env.VERCEL_ENV === "production" && env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : env.VERCEL_URL
+        ? `https://${env.VERCEL_URL}`
+        : undefined);
+  return url?.replace(/\/$/, "");
+})();
