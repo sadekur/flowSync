@@ -55,6 +55,8 @@ Run from the repo root.
 | `npm run start:backend` | Run compiled backend (`node backend/dist/server.js`) |
 | `npm run lint:frontend` | ESLint on `src/` only (backend is excluded — different runtime, see `eslint.config.mjs`) |
 | `npm run typecheck:backend` | Same discovery/flags as `build:backend`, with `--noEmit` |
+| `npm test` | Every test (Vitest, ~30 s). `test:backend` / `test:frontend` run one project, `test:watch` watches |
+| `npm test -- backend/tests/auth.test.ts -t "duplicate email"` | One file, or one test by name |
 
 **On Windows, `build:backend` / `typecheck:backend` need a POSIX script shell.** npm defaults to `cmd.exe` there, and those scripts then fail with `'f' is not recognized`. Run them as `npm run typecheck:backend --script-shell="$(which bash)"` from the Bash tool, or set it once with `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 
