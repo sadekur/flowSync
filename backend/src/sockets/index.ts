@@ -18,9 +18,9 @@ export function createSocketServer(httpServer: http.Server): IoServer {
     // CORS to WebSocket upgrades, hence the explicit Origin check below.
     cors: { origin: env.CORS_ORIGIN, credentials: true },
     // Cross-site WebSocket hijacking guard: reject any handshake (polling or
-    // upgrade) whose Origin isn't exactly the frontend's, before auth runs.
+    // upgrade) whose Origin isn't the frontend's, before auth runs.
     allowRequest: (req, callback) => {
-      callback(null, req.headers.origin === env.CORS_ORIGIN);
+      callback(null, isAllowedOrigin(req.headers.origin, req.headers));
     },
     // Largest legit packet is one chat message (≤2000 chars, ≤8KB as UTF-8);
     // the 1MB default would let a client make the server buffer far more.
