@@ -176,6 +176,39 @@ Step 13 (Deployment) in progress, targeting Vercel at the user's choice (one pro
   - Browser (no login): `/` and `/dashboard` redirect to `/login`, and `/login` and `/register` render. The only console error is a hydration mismatch caused by a browser extension's `cz-shortcut-listen` attribute on `<body>`, not by the app.
   - **Pending, for the user:** a logged-in browser pass (dashboard, project page: task status change, chat, presence) to confirm nothing regressed. Browser automation can't log in.
 
+- [x] Security follow-up (found during Step 12):
+  - `.env.example` had the real Atlas URI (user and password) and the real JWT secrets, and `sadekur/flowSync` is public. It now has placeholders (`433b91e`). `.env` was never committed.
+  - The local `.env` JWT secrets were rotated (128 hex chars each). Everyone is logged out once.
+  - **User action still needed:** change the Atlas database user's password. The old one stays in the public git history, and only rotating it closes the hole.
+- [ ] Step 13: Deployment, on **Vercel, one project** (user's choice, over the plan's Docker-only version), plus Docker Compose for self-hosting
+  - Same-origin deploy, done in code. The browser talks to one origin, which routes `/api/*` and `/socket.io/*` to the backend:
+    - `client-api.ts` and `socketMiddleware` use relative URLs when `NEXT_PUBLIC_*` is unset.
+    - `server-fetch.ts` uses `BACKEND_INTERNAL_URL` (service binding / compose network).
+    - `CORS_ORIGIN` and `COOKIE_DOMAIN` are optional. Unset means no cross-origin access and host-only cookies, so preview URLs just work.
+    - The socket Origin check (`isAllowedOrigin`) accepts `CORS_ORIGIN` or same-origin (Origin host = `X-Forwarded-Host`/`Host`).
+  - WebSocket-only Socket.IO client: Vercel Functions can't do long-polling.
+  - `backend/src/httpServer.ts` (`createHttpServer`) is shared by `server.ts` (listens), the new `vercel.ts` (exports the `http.Server` and connects at module load), and the test harness.
+  - `/// <reference>` to `types/express.d.ts` in `app.ts`, because Vercel's builder type-checks from the entry file.
+  - `vercel.json`: services `web` (Next.js) and `api` (Express, `backend/src/vercel.ts`), both `root: "."`. A `web → api` binding sets `BACKEND_INTERNAL_URL`. Rewrites: `/api/(.*)` and `/socket.io/(.*)` → `api`, everything else → `web`.
+  - Vercel project `sadekurs-projects/flowsync` created and linked. It is **not** connected to GitHub, because the auto-commit tool would start a build per commit.
+  - `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`: freshly generated, stored as Secrets for production and preview, and never displayed.
+  - Self-hosting (**written, not run: no Docker on this machine**):
+    - `Dockerfile` (one image, both apps) and `.dockerignore`
+    - `docker-compose.yml` (mongo, redis, api, web, nginx; only Nginx publishes ports)
+    - `deploy/nginx/nginx.conf`: HTTP → HTTPS, TLS, WebSocket upgrade for `/socket.io/`, HSTS / `frame-ancestors 'none'` / nosniff / Referrer / Permissions headers
+    - `deploy/make-dev-cert.sh` (self-signed `localhost` cert; `deploy/nginx/certs/` is gitignored)
+  - Docs: `docs/api/sockets.md` (connecting, Origin rule, WebSocket-only, max-duration reconnects), `.env.example`, `CLAUDE.md`
+- [x] Verified so far:
+  - `npm test`: 115/115, including two new same-origin socket tests (direct, and via `x-forwarded-host`) plus a forged-host rejection
+  - `typecheck:backend`, `lint:frontend` and `tsc -p tsconfig.json` pass
+  - The local `npx vercel@65.12.1 build --prod` succeeds for both services, so the shared root `"."` works
+  - The dev backend still runs on the new code and `.env` (health ok)
+  - Compose YAML parses
+- [ ] Pending:
+  - Redis provisioning. The user must accept the Marketplace terms first, then run `vercel integration add redis --name flowsync-redis --meta Region=iad1`.
+  - `MONGO_URI` in Vercel. The user adds it after rotating the Atlas password and allowing `0.0.0.0/0` in Atlas Network Access, which Vercel's dynamic IPs need.
+  - First production deploy, then live verification and adding the URL to the profile README.
+
 ## Next Steps
 
-1. **Step 13: Deployment**: Docker Compose (frontend, backend, mongo, redis, nginx), with Nginx handling TLS and repeating the security headers.
+1. Finish Step 13: the user actions above, then deploy and verify live.
