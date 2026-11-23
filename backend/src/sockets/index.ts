@@ -42,7 +42,7 @@ export function createSocketServer(httpServer: http.Server): IoServer {
   const io: IoServer = new Server(httpServer, {
     // Only governs the HTTP long-polling transport — browsers don't apply
     // CORS to WebSocket upgrades, hence the explicit Origin check below.
-    cors: { origin: env.CORS_ORIGIN, credentials: true },
+    cors: { origin: env.CORS_ORIGIN ?? false, credentials: true },
     // Cross-site WebSocket hijacking guard: reject any handshake (polling or
     // upgrade) whose Origin isn't the frontend's, before auth runs.
     allowRequest: (req, callback) => {
