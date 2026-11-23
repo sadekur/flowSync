@@ -30,8 +30,10 @@ export function openSocket(baseUrl: string, user: TestUser | null, options: Conn
     transports: ["websocket"],
     reconnection: false,
     forceNew: true,
-    extraHeaders,
     ...rest,
+    // Merged, so a test's own extraHeaders (e.g. x-forwarded-host) add to the
+    // cookie and Origin instead of replacing them.
+    extraHeaders: { ...extraHeaders, ...rest.extraHeaders },
   });
 }
 
