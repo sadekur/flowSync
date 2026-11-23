@@ -6,7 +6,8 @@ import { apiFetch, ApiError } from "@/lib/client-api";
 import { renderWithStore } from "@/test/render";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
 vi.mock("@/lib/client-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/client-api")>()),
   apiFetch: vi.fn(),
