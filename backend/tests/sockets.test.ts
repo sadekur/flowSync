@@ -57,6 +57,29 @@ describe("handshake", () => {
       expect(message).not.toMatch(/authenticated|token/i);
     }
   });
+
+  it("accepts a same-origin handshake (frontend and API on one host, as on Vercel and behind Nginx)", async () => {
+    const alice = await registerUser(server.url, "Alice");
+    // The page's origin is the API's own origin.
+    const direct = await connect(server.url, alice, { origin: server.url });
+    expect(direct.connected).toBe(true);
+
+    // Behind a proxy, the public host arrives as x-forwarded-host.
+    const proxied = await connect(server.url, alice, {
+      origin: "https://flowsync.example",
+      extraHeaders: { "x-forwarded-host": "flowsync.example" },
+    });
+    expect(proxied.connected).toBe(true);
+  });
+
+  it("still rejects an Origin whose host isn't the one the request was sent to", async () => {
+    const alice = await registerUser(server.url, "Alice");
+    const message = await expectConnectError(server.url, alice, {
+      origin: "https://evil.example",
+      extraHeaders: { "x-forwarded-host": "flowsync.example" },
+    });
+    expect(message).not.toMatch(/authenticated|token/i);
+  });
 });
 
 describe("project:join / project:leave", () => {
