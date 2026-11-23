@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { apiFetch } from "@/lib/client-api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectAllTasks, tasksHydrated } from "@/store/tasksSlice";
+import { selectAllTasks, tasksHydrated, tasksSynced, tasksSyncStarted } from "@/store/tasksSlice";
 import { TaskCard } from "./TaskCard";
 import type { Task } from "@/types/api";
 
