@@ -36,8 +36,8 @@ describe("VerifyEmailForm", () => {
       method: "POST",
       body: JSON.stringify({ token: "verify_123-XYZ" }),
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("Your email is verified");
-    expect(screen.getByRole("link", { name: "Continue to FlowSync" })).toHaveAttribute("href", "/dashboard");
+    expect((await screen.findByRole("status")).textContent).toContain("Your email is verified");
+    expect(screen.getByRole("link", { name: "Continue to FlowSync" }).getAttribute("href")).toBe("/dashboard");
   });
 
   it("shows the API's error, and lets the user try again", async () => {
@@ -48,15 +48,15 @@ describe("VerifyEmailForm", () => {
     renderWithStore(<VerifyEmailForm />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Confirm my email" }));
-    expect(await screen.findByText(/invalid or has expired/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Confirm my email" })).toBeEnabled();
+    expect(await screen.findByText(/invalid or has expired/)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Confirm my email" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it("explains how to get a link when there's no token", async () => {
     window.history.replaceState(null, "", "/verify-email");
     renderWithStore(<VerifyEmailForm />);
 
-    expect(await screen.findByText(/needs the link from your verification email/)).toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(await screen.findByText(/needs the link from your verification email/)).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });
