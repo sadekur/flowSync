@@ -266,7 +266,12 @@
     - Vercel production has `MAIL_FROM` (set by Claude) and `SMTP_URL` (Brevo login + SMTP key, entered by the user).
     - Brevo's SMTP IP blocking stays off on purpose: Vercel has no fixed egress IPs.
   - **Shipped** (`git push origin master:release`). The local `vercel build --prod` passed first. Production then answered: health ok, `forgot-password` 200 with the generic message, `/forgot-password` and `/reset-password` 200, and the login page has the eye toggle and the "Forgot your password?" link.
-  - Pending: a real delivery through Brevo. The user requests a reset for their own account on production and checks their inbox (and spam).
+  - **First production reset: no email, and the SMTP key leaked into the logs.** The production log showed `SMTP_URL` stored as the key followed by the URL. nodemailer's error quoted the whole value, and the reset service logged it.
+    - Fix, with `backend/tests/mailer.test.ts` (5 tests):
+      - validate `SMTP_URL` before use (`smtpUrlProblem`)
+      - scrub the URL and password from every mail error (`redactSmtpSecrets`)
+    - The key has to be rotated in Brevo by the user, then `SMTP_URL` re-entered.
+  - Pending: a real delivery through Brevo after the key rotation.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
