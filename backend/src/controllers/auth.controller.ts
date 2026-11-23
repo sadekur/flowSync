@@ -50,11 +50,29 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
 
 export async function resetPassword(req: Request, res: Response): Promise<void> {
   const input = resetPasswordSchema.parse(req.body);
-  await authService.resetPassword(input);
-  // Every session for that account was just invalidated; drop this browser's
-  // cookies too so it doesn't hold on to a dead refresh token.
-  clearAuthCookies(res);
+  const userId = await authService.resetPassword(input);
+  // Every session for that account was just invalidated. If this browser holds
+  // one of them, drop its cookies too; a session for a *different* account
+  // (someone resetting a password on a shared machine) is left alone.
+  if (sessionUserId(req) === userId) clearAuthCookies(res);
   res.status(200).json({ message: "Password updated. Log in with your new password." });
+}
+
+/** Whose session this browser's cookies belong to, if any (access or refresh token). */
+function sessionUserId(req: Request): string | undefined {
+  const access = req.cookies?.[ACCESS_COOKIE];
+  const refresh = req.cookies?.[REFRESH_COOKIE];
+  try {
+    if (access) return verifyAccessToken(access).sub;
+  } catch {
+    // Expired access token: fall through to the refresh token.
+  }
+  try {
+    if (refresh) return verifyRefreshToken(refresh).sub;
+  } catch {
+    // No valid session.
+  }
+  return undefined;
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
