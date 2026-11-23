@@ -45,6 +45,8 @@ describe("EmailVerificationBanner", () => {
 
 describe("AppHeader", () => {
   it("shows the banner only to unverified users", () => {
+    // The header's NotificationBell loads notifications on mount.
+    vi.mocked(apiFetch).mockResolvedValue({ notifications: [], unreadCount: 0 });
     const { unmount } = renderWithStore(<AppHeader user={makeUser("Alice", { emailVerifiedAt: null })} />);
     expect(resendButton()).toBeTruthy();
     unmount();
