@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
 import * as authService from "../services/auth.service";
-import { loginSchema, registerSchema } from "../validators/auth.validators";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from "../validators/auth.validators";
 import { clearAuthCookies, REFRESH_COOKIE, setAuthCookies } from "../utils/cookies";
 import { ApiError } from "../middleware/errorHandler";
 
