@@ -46,6 +46,17 @@ describe("ResetPasswordForm", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("keeps the token when the effect runs twice (React Strict Mode, as in dev)", async () => {
+    window.history.replaceState(null, "", "/reset-password#token=strict-token");
+    renderWithStore(
+      <StrictMode>
+        <ResetPasswordForm />
+      </StrictMode>,
+    );
+    await screen.findByLabelText("New password");
+    expect(screen.queryByText(/needs the link from your reset email/)).toBeNull();
+  });
+
   it("catches mismatched passwords without calling the API", async () => {
     window.history.replaceState(null, "", "/reset-password#token=abc");
     renderWithStore(<ResetPasswordForm />);
