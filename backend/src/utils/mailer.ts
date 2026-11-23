@@ -36,7 +36,7 @@ export async function sendMail(message: MailMessage): Promise<void> {
   if (!smtp) {
     // Never print an email in production: it carries a live token, and logs
     // are readable by more people than the inbox is.
-    if (isProduction) throw new Error("Email isn't configured: set SMTP_URL or RESEND_API_KEY");
+    if (isProduction) throw new Error("Email isn't configured: set SMTP_URL");
     logger.info(`[mail] No SMTP configured; printing instead.\nTo: ${message.to}\nSubject: ${message.subject}\n\n${message.text}`);
     return;
   }
