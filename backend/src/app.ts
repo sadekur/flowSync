@@ -32,7 +32,8 @@ export function createApp(): Express {
 
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      // false = no cross-origin access at all (same-origin deploys).
+      origin: env.CORS_ORIGIN ?? false,
       credentials: true,
     }),
   );
