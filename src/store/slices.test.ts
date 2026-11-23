@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { makeStore } from "./index";
 import { messagesHydrated, messagesReceived, olderMessagesLoaded, selectAllMessages } from "./messagesSlice";
-import { selectAllTasks, taskRemoved, tasksHydrated, taskUpserted } from "./tasksSlice";
+import { selectAllTasks, taskRemoved, tasksHydrated, tasksSynced, tasksSyncStarted, taskUpserted } from "./tasksSlice";
 import { typingStarted, typingStopped, userOffline, userOnline } from "./presenceSlice";
 import { allMarkedRead, notificationReceived, notificationsHydrated } from "./notificationsSlice";
 import { connected, connectFailed, disconnected, leaveProject, roomJoined, socketConnect, socketDisconnect } from "./socketSlice";
