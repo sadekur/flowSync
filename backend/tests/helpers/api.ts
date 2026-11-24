@@ -3,6 +3,8 @@
 // every non-GET. Cookies are handled by hand because the API scopes them to
 // COOKIE_DOMAIN=localhost while the test server listens on 127.0.0.1.
 
+import { User } from "../../src/models/User";
+
 export interface ApiResponse<T = any> {
   status: number;
   body: T;

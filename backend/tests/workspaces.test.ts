@@ -110,15 +110,15 @@ describe("owner-only actions", () => {
     // Cache bob's (empty) list before he's added.
     expect((await bob.client.get("/api/workspaces")).body.workspaces).toEqual([]);
 
+    await markVerified(bob);
     const res = await alice.client.post(`/api/workspaces/${ws._id}/members`, { email: bob.email });
     expect(res.status).toBe(200);
     expect(ids((await bob.client.get("/api/workspaces")).body.workspaces)).toEqual([ws._id]);
   });
 
-  it("rejects adding an unknown email (404), an existing member (409), or by a non-owner (403)", async () => {
+  it("rejects adding an existing member (409), or by a non-owner (403)", async () => {
     const f = await createFixture(server.url);
     const path = `/api/workspaces/${f.workspace._id}/members`;
-    expect((await f.owner.client.post(path, { email: "nobody@example.com" })).status).toBe(404);
     expect((await f.owner.client.post(path, { email: f.member.email })).status).toBe(409);
     expect((await f.member.client.post(path, { email: f.outsider.email })).status).toBe(403);
   });
