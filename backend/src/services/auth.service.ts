@@ -11,6 +11,8 @@ import { sendMail } from "../utils/mailer";
 import { passwordResetEmail, verifyEmailEmail } from "../utils/emails";
 import type { AuthTokenPurpose } from "../models/AuthToken";
 import { logger } from "../utils/logger";
+import { generateEmailedToken, hashToken } from "../utils/tokens";
+import { acceptInvite, type JoinedWorkspace } from "./invite.service";
 
 // 12 everywhere real. The test suite registers a few users per test, and
 // bcryptjs (pure JS) takes ~0.8 s per hash at 12, so NODE_ENV=test — set only
@@ -28,6 +30,13 @@ export interface AuthResult {
   tokens: AuthTokens;
 }
 
+export interface RegisterResult extends AuthResult {
+  /** Set when the account was created through a workspace invite that worked. */
+  joinedWorkspace: JoinedWorkspace | null;
+  /** Why the invite didn't work, when one was given. The account exists either way. */
+  inviteError: string | null;
+}
+
 function issueTokens(user: UserDocument): AuthTokens {
   return {
     accessToken: signAccessToken({ sub: user.id }),
@@ -36,24 +45,42 @@ function issueTokens(user: UserDocument): AuthTokens {
   };
 }
 
-export async function register(input: RegisterInput): Promise<AuthResult> {
+export async function register(input: RegisterInput): Promise<RegisterResult> {
   const existing = await User.findOne({ email: input.email });
   if (existing) {
     throw new ApiError(409, "Email already in use");
   }
 
   const passwordHash = await bcrypt.hash(input.password, PASSWORD_SALT_ROUNDS);
-  const user = await User.create({ name: input.name, email: input.email, passwordHash });
+  let user = await User.create({ name: input.name, email: input.email, passwordHash });
 
-  try {
-    await sendVerificationEmail(user);
-  } catch (err) {
-    // The account is created either way; the banner's resend button is the
-    // retry.
-    logger.error("Verification email failed to send", err);
+  // Signing up from an invite link: the invite's token came from the inbox,
+  // so accepting it also verifies the address and no verification email is
+  // needed. The account is already created, so a failed invite is reported
+  // alongside it rather than failing the registration.
+  let joinedWorkspace: JoinedWorkspace | null = null;
+  let inviteError: string | null = null;
+  if (input.inviteToken) {
+    try {
+      joinedWorkspace = await acceptInvite(input.inviteToken, user.id);
+      user = (await User.findById(user._id)) ?? user;
+    } catch (err) {
+      inviteError = err instanceof ApiError ? err.message : "The invite couldn't be accepted.";
+      if (!(err instanceof ApiError)) logger.error("Accepting an invite at registration failed", err);
+    }
   }
 
-  return { user, tokens: issueTokens(user) };
+  if (!joinedWorkspace) {
+    try {
+      await sendVerificationEmail(user);
+    } catch (err) {
+      // The account is created either way; the banner's resend button is the
+      // retry.
+      logger.error("Verification email failed to send", err);
+    }
+  }
+
+  return { user, tokens: issueTokens(user), joinedWorkspace, inviteError };
 }
 
 export async function login(input: LoginInput): Promise<AuthResult> {
@@ -87,16 +114,12 @@ const RESET_TOKEN_TTL_MINUTES = 30;
 const RESET_REQUEST_LIMIT = 3;
 const RESET_REQUEST_WINDOW_SECONDS = 60 * 60;
 
-function hashToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
-}
-
 /**
  * Creates a single-use token for `purpose` and returns the raw value to email.
  * One live token per user and purpose: a new one retires the previous one.
  */
 async function issueEmailedToken(userId: UserDocument["_id"], purpose: AuthTokenPurpose, ttlMs: number): Promise<string> {
-  const token = crypto.randomBytes(32).toString("base64url");
+  const token = generateEmailedToken();
   await AuthToken.deleteMany({ user: userId, purpose });
   await AuthToken.create({ user: userId, purpose, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + ttlMs) });
   return token;
