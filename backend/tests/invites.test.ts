@@ -221,7 +221,7 @@ describe("POST /api/invites/accept", () => {
 
     const res = await mallory.client.post("/api/invites/accept", { token });
     expect(res.status).toBe(403);
-    expect(res.body.message).toContain(email);
+    expect(res.body.error).toContain(email);
     expect(await memberIds(owner, ws._id)).toEqual([owner.id]);
     expect((await anonymous().post("/api/invites/lookup", { token })).status).toBe(200);
   });

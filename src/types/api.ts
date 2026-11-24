@@ -19,6 +19,29 @@ export interface Workspace {
   updatedAt: string;
 }
 
+// Mirrors InviteDto in backend/src/services/invite.service.ts.
+export interface WorkspaceInvite {
+  _id: string;
+  email: string;
+  invitedBy: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+// Mirrors InvitePreview: what /invite shows to whoever holds the link.
+export interface InvitePreview {
+  email: string;
+  workspaceName: string;
+  invitedByName: string;
+  expiresAt: string;
+}
+
+export interface JoinedWorkspace {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
 export interface Project {
   _id: string;
   workspace: string;
