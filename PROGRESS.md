@@ -2,7 +2,7 @@
 
 ## Current State
 
-**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 156/156. Post-MVP: the email system is in progress. Part 1 (password reset) is done and delivering in production through Brevo. Part 2 (email verification, a banner with resend) is done and shipped. Part 3 (workspace invites) is next. Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
+**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 181/181. Post-MVP: the email system is built. Part 1 (password reset) is done and delivering in production through Brevo. Part 2 (email verification, a banner with resend) is done and shipped. Part 3 (workspace invites, with a new members page) is done locally and not shipped yet. Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
 
 ## Completed
 
@@ -306,6 +306,40 @@
     - `verify-email` gives 400 for a made-up or missing token; `resend-verification` gives 401 without a session
     - No throwaway account was registered there: it would send a real Brevo email to a dead address and hurt the sender's reputation.
   - **Pending for the user:** the banner needs a login, so browser automation can't show it. Log in to see it (existing accounts start unverified), use **Resend email**, and click the link.
+- [x] Email system, part 3 of 3: workspace invites ("email anyone", the user's choice)
+  - Backend:
+    - `models/WorkspaceInvite.ts` (sha256 only, one per workspace + email, TTL index, 7 days)
+    - `services/invite.service.ts`:
+      - `addOrInvite` behind the existing `POST /workspaces/:id/members`: a verified account is added at once and emailed (200); a new address or an unverified account gets an invite link (201)
+      - list and cancel invites; `previewInvite`; `acceptInvite` (the session's email must match; also verifies the address)
+    - routes: `GET` and `DELETE /workspaces/:id/invites[/:inviteId]` (owner), `POST /invites/lookup` (open), `POST /invites/accept` (auth + CSRF)
+    - `register` takes an optional `inviteToken`: it joins and verifies in one step, and skips the verification email
+    - `addUserToWorkspace` (atomic `$addToSet`) replaces the old `addMember`; workspace deletion cascades to invites
+    - `utils/tokens.ts` (shared token generation and hashing), two new templates in `utils/emails.ts`, 20 adds/invites per owner per hour
+  - Frontend:
+    - `/workspaces/[id]`, the members page (`WorkspaceMembers`): add by email, remove members, pending invites with Cancel. The dashboard card's member count links to it.
+    - `/invite` (`InviteAcceptance`): looks the invite up, then offers sign-up (email locked) or login with accept, or **Join** for the invited account. A different logged-in account is told the invite isn't theirs.
+    - `RegisterForm` and `LoginForm` take optional invite props
+    - `WorkspaceInvite` / `InvitePreview` / `JoinedWorkspace` in `types/api.ts`
+  - Tests:
+    - `backend/tests/invites.test.ts` (15), `InviteAcceptance.test.tsx` (6), `WorkspaceMembers.test.tsx` (4)
+    - workspace tests updated: the cascade covers invites, and an unknown email is now an invite, not a 404. `createFixture` verifies its member.
+    - `npm test` passes 181/181
+    - Mutation check in a scratch copy: each of these was caught: no email match on accept, instant-adding unverified accounts, no CSRF on accept, a cancel not scoped to its workspace, and a re-invite that leaves the old link live
+  - Docs: `docs/api/invites.md` (new), `docs/api/workspaces.md`, `docs/api/auth.md`, `DECISIONS.md`
+  - Verified live (local dev, a second backend on :4001 with no SMTP, throwaway `s16test-` users), 15/15 plus the added path:
+    - an unknown email got 201 and the invite email printed; lookup worked through the main :4000 backend
+    - a different account got 403; accept without CSRF got 403
+    - registering with the token joined the workspace and verified the account, with no verification email; the owner's cached list showed 2 members; the used link was dead
+    - an unverified existing account got an invite, not an instant add; cancelling it got 204
+    - once marked verified, the same account was added at once (200), with the "added you" email
+  - Browser check (logged out, nothing registered or logged in):
+    - `/invite#token=…` showed the inviter, address and workspace, with the email locked; **Log in instead** switched forms; the token left the address bar on the first click
+    - `/invite` with no token shows the hint; `/workspaces/…` logged out redirects to `/login`
+    - no app console errors; the only one is the Grammarly hydration warning on `<body>`
+  - Cleanup: the 3 users, the workspace, the leftover invite and 2 verification tokens deleted from Atlas, plus the owner's rate-limit key
+  - **Not shipped yet.** Shipping is `git push origin master:release` after a local `vercel build --prod`.
+  - **Pending for the user:** the logged-in parts (the members page, **Join** as an existing account) need a login, which browser automation doesn't do.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
