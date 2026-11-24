@@ -57,9 +57,12 @@ export default async function DashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <h2 className="font-medium">{workspace.name}</h2>
-                <span className="text-xs text-zinc-500">
-                  {workspace.members.length} member(s)
-                </span>
+                <Link
+                  href={`/workspaces/${workspace.slug}`}
+                  className="text-xs text-zinc-500 underline underline-offset-2 hover:text-foreground"
+                >
+                  {workspace.members.length} member(s){workspace.owner === user._id ? " · Manage" : ""}
+                </Link>
               </div>
 
               <ul className="mt-4 flex flex-col gap-2">
