@@ -339,7 +339,7 @@
     - no app console errors; the only one is the Grammarly hydration warning on `<body>`
   - Cleanup: the 3 users, the workspace, the leftover invite and 2 verification tokens deleted from Atlas, plus the owner's rate-limit key
   - **Not shipped yet.** Shipping is `git push origin master:release` after a local `vercel build --prod`.
-  - **Pending for the user:** the logged-in parts (the members page, **Join** as an existing account) need a login, which browser automation doesn't do.
+  - **The user confirmed the members page works logged in (2026-11-24).** Still untried: **Join** as an existing account.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
   - Running `docker compose up` once Docker is installed
