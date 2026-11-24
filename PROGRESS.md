@@ -2,7 +2,7 @@
 
 ## Current State
 
-**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 181/181. Post-MVP: the email system is built. Part 1 (password reset) is done and delivering in production through Brevo. Part 2 (email verification, a banner with resend) is done and shipped. Part 3 (workspace invites, with a new members page) is done locally and not shipped yet. Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
+**All 13 steps are complete. FlowSync is live at https://flowsync-eight.vercel.app.** It runs as one Vercel project with two services in `bom1` (Mumbai), next to the Atlas M0 cluster (GCP Mumbai) and Upstash Redis (`bom1`). A live scripted run on production with two throwaway users passed 18/18, covering SSR through the service binding, same-origin WebSocket sockets, chat, typing, presence, task events, notifications, catch-up, and the CSRF / Origin / cookie checks. `npm test` passes 181/181. Post-MVP: the email system is built. Part 1 (password reset) is done and delivering in production through Brevo. Part 2 (email verification, a banner with resend) is done and shipped. Part 3 (workspace invites, with a new members page) is done and shipped. Docker Compose + Nginx files for self-hosting are written but not run (no Docker on this machine). Still pending for the user: a logged-in browser pass, locally and on production.
 
 ## Completed
 
@@ -338,7 +338,11 @@
     - `/invite` with no token shows the hint; `/workspaces/…` logged out redirects to `/login`
     - no app console errors; the only one is the Grammarly hydration warning on `<body>`
   - Cleanup: the 3 users, the workspace, the leftover invite and 2 verification tokens deleted from Atlas, plus the owner's rate-limit key
-  - **Not shipped yet.** Shipping is `git push origin master:release` after a local `vercel build --prod`.
+  - **Shipped** (`release` at `3356899`; the local `vercel build --prod` passed first). On production:
+    - health ok; `/invite` 200; `/workspaces/…` logged out redirects (307)
+    - `invites/lookup` gives 400 for a made-up token; `invites/accept` and the invite list give 401 without a session
+    - in the browser, `/invite#token=made-up` showed the "invalid or has expired" message through the production API, with no console errors
+    - No throwaway invite was sent there: it would email a dead address through Brevo and hurt the sender's reputation.
   - **The user confirmed the members page works logged in (2026-11-24).** Still untried: **Join** as an existing account.
 - [ ] Pending for the user:
   - A logged-in browser pass (dashboard, task status, chat between two tabs, presence), locally and at https://flowsync-eight.vercel.app
