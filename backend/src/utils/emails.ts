@@ -41,3 +41,50 @@ export function passwordResetEmail(to: string, name: string, url: string, validM
     html: layout("Reset your password", [intro, expiry], { label: "Choose a new password", url }, footer),
   };
 }
+
+// Names are user-chosen. The HTML escapes them, and this keeps a name with
+// line breaks from spreading across a subject line.
+function oneLine(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+export function workspaceInviteEmail(
+  to: string,
+  inviterName: string,
+  workspaceName: string,
+  url: string,
+  validDays: number,
+): MailMessage {
+  const inviter = oneLine(inviterName);
+  const workspace = oneLine(workspaceName);
+  const intro = `${inviter} invited you to join the workspace "${workspace}" on FlowSync.`;
+  const how = `Open the link to accept. If you don't have an account yet, you can create one there with this email address (${to}).`;
+  const expiry = `The link works once and expires in ${validDays} days.`;
+  const footer = "If you weren't expecting this, ignore this email. Nothing happens unless you accept.";
+  return {
+    to,
+    subject: `${inviter} invited you to ${workspace} on FlowSync`,
+    text: `${intro}\n\n${how}\n${url}\n\n${expiry}\n\n${footer}\n`,
+    html: layout(`Join ${workspace}`, [intro, how, expiry], { label: "Accept the invite", url }, footer),
+  };
+}
+
+export function addedToWorkspaceEmail(
+  to: string,
+  name: string,
+  inviterName: string,
+  workspaceName: string,
+  url: string,
+): MailMessage {
+  const inviter = oneLine(inviterName);
+  const workspace = oneLine(workspaceName);
+  const intro = `Hi ${oneLine(name)}, ${inviter} added you to the workspace "${workspace}" on FlowSync.`;
+  const next = "It's on your dashboard now, with its projects, tasks and chat.";
+  const footer = "If you don't know this person, the workspace owner can remove you, or you can ignore it.";
+  return {
+    to,
+    subject: `${inviter} added you to ${workspace} on FlowSync`,
+    text: `${intro}\n\n${next}\n${url}\n\n${footer}\n`,
+    html: layout(`You've joined ${workspace}`, [intro, next], { label: "Open FlowSync", url }, footer),
+  };
+}
