@@ -59,9 +59,11 @@ export default async function DashboardPage() {
                 <h2 className="font-medium">{workspace.name}</h2>
                 <Link
                   href={`/workspaces/${workspace.slug}`}
-                  className="text-xs text-zinc-500 underline underline-offset-2 hover:text-foreground"
+                  className="rounded-md border border-black/10 px-3 py-1.5 text-xs hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
                 >
-                  {workspace.members.length} member(s){workspace.owner === user._id ? " · Manage" : ""}
+                  {workspace.owner === user._id
+                    ? `Members & invites (${workspace.members.length})`
+                    : `Members (${workspace.members.length})`}
                 </Link>
               </div>
 

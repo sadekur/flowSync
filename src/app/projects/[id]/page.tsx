@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { serverFetch } from "@/lib/server-fetch";
@@ -50,6 +51,20 @@ export default async function ProjectPage({ params, searchParams }: PageProps<"/
       <AppHeader user={user} />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-10">
         <div>
+          <nav className="mb-2 flex items-center justify-between gap-4 text-sm text-zinc-600 dark:text-zinc-400">
+            <Link href="/dashboard" className="underline underline-offset-2 hover:text-foreground">
+              ← {workspace.name}
+            </Link>
+            {/* Members and invites live on the workspace's page. */}
+            <Link
+              href={`/workspaces/${workspace.slug}`}
+              className="rounded-md border border-black/10 px-3 py-1.5 text-foreground hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/5"
+            >
+              {(typeof workspace.owner === "string" ? workspace.owner : workspace.owner._id) === user._id
+                ? `Members & invites (${members.length})`
+                : `Members (${members.length})`}
+            </Link>
+          </nav>
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-xl font-semibold">{project.name}</h1>
             {/* Canonical _id, not the URL slug — the socket room is keyed by id. */}
