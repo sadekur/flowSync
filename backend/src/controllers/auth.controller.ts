@@ -13,10 +13,14 @@ import { ApiError } from "../middleware/errorHandler";
 
 export async function register(req: Request, res: Response): Promise<void> {
   const input = registerSchema.parse(req.body);
-  const { user, tokens } = await authService.register(input);
+  const { user, tokens, joinedWorkspace, inviteError } = await authService.register(input);
 
   setAuthCookies(res, tokens);
-  res.status(201).json({ user });
+  // `workspace` / `inviteError` only appear when an inviteToken was sent.
+  res.status(201).json({
+    user,
+    ...(input.inviteToken ? { workspace: joinedWorkspace, inviteError } : {}),
+  });
 }
 
 export async function login(req: Request, res: Response): Promise<void> {

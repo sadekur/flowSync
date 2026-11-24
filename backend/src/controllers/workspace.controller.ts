@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import * as workspaceService from "../services/workspace.service";
+import * as inviteService from "../services/invite.service";
 import { addMemberSchema, createWorkspaceSchema, updateWorkspaceSchema } from "../validators/workspace.validators";
 
 export async function create(req: Request, res: Response): Promise<void> {
@@ -38,9 +39,23 @@ export async function remove(req: Request, res: Response): Promise<void> {
 }
 
 export async function addMember(req: Request, res: Response): Promise<void> {
-  const input = addMemberSchema.parse(req.body);
-  const workspace = await workspaceService.addMember(req.workspace!, input);
-  res.status(200).json({ workspace });
+  const { email } = addMemberSchema.parse(req.body);
+  const result = await inviteService.addOrInvite(req.workspace!, req.userId as string, email);
+  if (result.kind === "added") {
+    res.status(200).json({ workspace: result.workspace });
+  } else {
+    res.status(201).json({ invite: result.invite });
+  }
+}
+
+export async function listInvites(req: Request, res: Response): Promise<void> {
+  const invites = await inviteService.listInvites(req.workspace!.id);
+  res.status(200).json({ invites });
+}
+
+export async function cancelInvite(req: Request, res: Response): Promise<void> {
+  await inviteService.cancelInvite(req.workspace!.id, req.params.inviteId as string);
+  res.status(204).send();
 }
 
 export async function removeMember(req: Request, res: Response): Promise<void> {

@@ -14,6 +14,7 @@ import { projectRouter } from "./routes/project.routes";
 import { taskRouter } from "./routes/task.routes";
 import { messageRouter } from "./routes/message.routes";
 import { notificationRouter } from "./routes/notification.routes";
+import { inviteRouter } from "./routes/invite.routes";
 import { notFound } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -52,6 +53,7 @@ export function createApp(): Express {
   app.use("/api", taskRouter);
   app.use("/api", messageRouter);
   app.use("/api", notificationRouter);
+  app.use("/api", inviteRouter);
 
   app.use(notFound);
   app.use(errorHandler);

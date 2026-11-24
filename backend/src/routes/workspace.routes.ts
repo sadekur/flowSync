@@ -50,3 +50,18 @@ workspaceRouter.delete(
   requireWorkspaceOwner,
   asyncHandler(workspaceController.removeMember),
 );
+
+workspaceRouter.get(
+  "/workspaces/:workspaceId/invites",
+  asyncHandler(loadWorkspace),
+  requireWorkspaceOwner,
+  asyncHandler(workspaceController.listInvites),
+);
+
+workspaceRouter.delete(
+  "/workspaces/:workspaceId/invites/:inviteId",
+  requireCsrf,
+  asyncHandler(loadWorkspace),
+  requireWorkspaceOwner,
+  asyncHandler(workspaceController.cancelInvite),
+);
