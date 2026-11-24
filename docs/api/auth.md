@@ -12,9 +12,12 @@ Every `{ "user": {...} }` below is the profile: `_id`, `name`, `email`, `tokenVe
 
 ## `POST /api/auth/register`
 
-Body: `{ "name": string, "email": string, "password": string (min 8) }`
+Body: `{ "name": string, "email": string, "password": string (min 8), "inviteToken"?: string }`
 
 - **201** — sets auth cookies, returns `{ "user": { ...profile, emailVerifiedAt: null } }`, and emails a verification link (see `verify-email`). A failed send is logged, not reported: the account exists either way, and the banner's resend is the retry.
+- With `inviteToken` (from a workspace invite link, see `docs/api/invites.md`), the response also has `workspace` and `inviteError`:
+  - If the invite is live and addressed to this `email`, the account joins that workspace and starts **verified** (the token came from the inbox). `workspace` is `{ _id, name, slug }`, `inviteError` is `null`, and no verification email is sent.
+  - Otherwise the account is still created as usual (unverified, verification email sent). `workspace` is `null` and `inviteError` says why, e.g. the 400/403 messages of `POST /api/invites/accept`. The invite is left untouched.
 - **409** — email already in use
 - **400** — validation failed, `{ "error": "Validation failed", "issues": [{ "path", "message" }] }`
 

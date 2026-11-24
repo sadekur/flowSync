@@ -28,11 +28,23 @@ Owner only. Body: `{ "name": string }` → **200** `{ "workspace": {...} }` · *
 
 ## `DELETE /api/workspaces/:workspaceId`
 
-Owner only. Cascades: deletes every project, task and chat message inside the workspace first. **204** · **403** not the owner.
+Owner only. Cascades: deletes every project, task, chat message, notification and pending invite inside the workspace first. **204** · **403** not the owner.
 
 ## `POST /api/workspaces/:workspaceId/members`
 
-Owner only. Body: `{ "email": string }` → **200** `{ "workspace": {...} }` · **404** no user with that email · **409** already a member.
+Owner only. Body: `{ "email": string }` (case-insensitive). Adds or invites, depending on who has that email:
+
+- **200** `{ "workspace": {...} }` — a **verified** account: added at once, and emailed "{owner} added you to {workspace}" with a link to `/dashboard`. A failed send is only logged. Any pending invite for that email in this workspace is deleted.
+- **201** `{ "invite": { _id, email, invitedBy, expiresAt, createdAt } }` — no account, or an **unverified** one: an invite link is emailed (see `docs/api/invites.md`). An unverified account isn't added directly because whoever registered it may not own the address; the link only reaches the real inbox. Inviting the same email again replaces the token (the earlier link stops working) and resends.
+- **409** already a member · **429** more than 20 adds/invites by this owner in an hour (all workspaces) · **503** the invite email couldn't be sent (no invite is kept; try again).
+
+## `GET /api/workspaces/:workspaceId/invites`
+
+Owner only. **200** `{ "invites": [{ _id, email, invitedBy, expiresAt, createdAt }] }`: the pending, unexpired invites, newest first. **403** not the owner.
+
+## `DELETE /api/workspaces/:workspaceId/invites/:inviteId`
+
+Owner only. Cancels an invite; its link stops working. **204** · **404** no such invite in this workspace (including a malformed id) · **403** not the owner.
 
 ## `DELETE /api/workspaces/:workspaceId/members/:memberId`
 
