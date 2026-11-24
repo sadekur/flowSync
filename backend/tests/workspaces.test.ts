@@ -7,6 +7,7 @@ import { Message } from "../src/models/Message";
 import { createMessage } from "../src/services/message.service";
 import { Notification } from "../src/models/Notification";
 import { Workspace } from "../src/models/Workspace";
+import { WorkspaceInvite } from "../src/models/WorkspaceInvite";
 
 let server: TestServer;
 
@@ -145,7 +146,7 @@ describe("owner-only actions", () => {
 });
 
 describe("DELETE /api/workspaces/:id", () => {
-  it("cascades to projects, tasks, messages and notifications", async () => {
+  it("cascades to projects, tasks, messages, notifications and invites", async () => {
     const f = await createFixture(server.url);
     // A task assigned to the member creates a notification as well.
     const task = await f.owner.client.post(`${f.projectPath}/tasks`, { title: "Ship it", assignee: f.member.id });
@@ -153,6 +154,8 @@ describe("DELETE /api/workspaces/:id", () => {
     await createMessage({ _id: f.project._id, workspace: f.workspace._id }, f.owner.id, "hello");
 
     expect(await Notification.countDocuments()).toBe(1);
+    const invite = await f.owner.client.post(`/api/workspaces/${f.workspace._id}/members`, { email: "new@example.com" });
+    expect(invite.status).toBe(201);
 
     // Some other workspace's data must survive.
     const other = (await f.outsider.client.post("/api/workspaces", { name: "Other" })).body.workspace;
@@ -165,6 +168,7 @@ describe("DELETE /api/workspaces/:id", () => {
     expect(await Task.countDocuments({ project: f.project._id })).toBe(0);
     expect(await Message.countDocuments({ project: f.project._id })).toBe(0);
     expect(await Notification.countDocuments({ workspace: f.workspace._id })).toBe(0);
+    expect(await WorkspaceInvite.countDocuments({ workspace: f.workspace._id })).toBe(0);
     expect(await Project.countDocuments({ workspace: other._id })).toBe(1);
 
     // And it's gone from both members' lists.
