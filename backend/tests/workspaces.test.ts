@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { startTestServer, resetData, type TestServer } from "./helpers/server";
-import { createFixture, registerUser, TestClient } from "./helpers/api";
+import { createFixture, markVerified, registerUser, TestClient } from "./helpers/api";
 import { Project } from "../src/models/Project";
 import { Task } from "../src/models/Task";
 import { Message } from "../src/models/Message";
