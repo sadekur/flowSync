@@ -4,7 +4,7 @@
 
 ## CSRF
 
-`POST /api/auth/refresh`, `POST /api/auth/logout` and `POST /api/auth/resend-verification` require header `X-CSRF-Token` to match the `csrfToken` cookie value, or they respond **403**. `register`/`login`/`forgot-password`/`reset-password`/`verify-email` are exempt — no session is involved for a forged cross-site request to ride along on (the emailed links' token is the credential).
+`POST /api/auth/refresh`, `POST /api/auth/logout` and `POST /api/auth/resend-verification` (and `POST /api/invites/accept`, see `docs/api/invites.md`) require header `X-CSRF-Token` to match the `csrfToken` cookie value, or they respond **403**. `register`/`login`/`forgot-password`/`reset-password`/`verify-email` are exempt — no session is involved for a forged cross-site request to ride along on (the emailed links' token is the credential).
 
 ## The user object
 
