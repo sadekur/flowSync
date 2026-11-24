@@ -3,12 +3,14 @@ import { z } from "zod";
 const emailSchema = z.string().trim().toLowerCase().email("must be a valid email");
 const newPasswordSchema = z.string().min(8, "password must be at least 8 characters");
 // An emailed token (32 random bytes, base64url). The cap only stops junk.
-const emailedTokenSchema = z.string().min(1, "token is required").max(200, "token is invalid");
+export const emailedTokenSchema = z.string().min(1, "token is required").max(200, "token is invalid");
 
 export const registerSchema = z.object({
   name: z.string().trim().min(1, "name is required").max(100, "name is too long"),
   email: emailSchema,
   password: newPasswordSchema,
+  // From a workspace invite link: joins that workspace if the email matches.
+  inviteToken: emailedTokenSchema.optional(),
 });
 
 export const loginSchema = z.object({
