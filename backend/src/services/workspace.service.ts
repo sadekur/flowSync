@@ -4,11 +4,11 @@ import { Project } from "../models/Project";
 import { Task } from "../models/Task";
 import { Message } from "../models/Message";
 import { Notification } from "../models/Notification";
-import { User } from "../models/User";
+import { WorkspaceInvite } from "../models/WorkspaceInvite";
 import { ApiError } from "../middleware/errorHandler";
 import { generateUniqueSlug } from "../utils/slug";
 import { cacheAside, cacheKeys, invalidateCache } from "../utils/cache";
-import type { AddMemberInput, CreateWorkspaceInput, UpdateWorkspaceInput } from "../validators/workspace.validators";
+import type { CreateWorkspaceInput, UpdateWorkspaceInput } from "../validators/workspace.validators";
 
 // Membership gates socket writes, so its TTL is short: it bounds how long a
 // missed invalidation (Redis hiccup, read/write race) could let a removed
@@ -106,26 +106,26 @@ export async function deleteWorkspace(workspace: WorkspaceDocument): Promise<voi
   await Task.deleteMany({ project: { $in: projectIds } });
   await Message.deleteMany({ workspace: workspace._id });
   await Notification.deleteMany({ workspace: workspace._id });
+  await WorkspaceInvite.deleteMany({ workspace: workspace._id });
   await Project.deleteMany({ workspace: workspace._id });
   await workspace.deleteOne();
   await invalidateWorkspace(workspace);
   await invalidateCache(...projectIds.map((id) => cacheKeys.projectWorkspace(id.toString())));
 }
 
-export async function addMember(workspace: WorkspaceDocument, input: AddMemberInput): Promise<WorkspaceDocument> {
-  const user = await User.findOne({ email: input.email });
-  if (!user) {
-    throw new ApiError(404, "No user with that email");
-  }
-
-  const alreadyMember = workspace.members.some((m) => m.toString() === user.id);
-  if (alreadyMember) {
-    throw new ApiError(409, "User is already a member");
-  }
-
-  workspace.members.push(user._id);
-  await workspace.save();
-  await invalidateWorkspace(workspace);
+/**
+ * Adds a user to a workspace (atomically, so two concurrent adds can't drop
+ * each other's change). Returns the updated workspace, or null if it no
+ * longer exists. Adding someone who's already a member changes nothing.
+ * Callers decide who may be added: see services/invite.service.ts.
+ */
+export async function addUserToWorkspace(workspaceId: string, userId: string): Promise<WorkspaceDocument | null> {
+  const workspace = await Workspace.findByIdAndUpdate(
+    workspaceId,
+    { $addToSet: { members: userId } },
+    { returnDocument: "after" },
+  );
+  if (workspace) await invalidateWorkspace(workspace);
   return workspace;
 }
 
