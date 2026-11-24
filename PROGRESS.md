@@ -317,7 +317,7 @@
     - `addUserToWorkspace` (atomic `$addToSet`) replaces the old `addMember`; workspace deletion cascades to invites
     - `utils/tokens.ts` (shared token generation and hashing), two new templates in `utils/emails.ts`, 20 adds/invites per owner per hour
   - Frontend:
-    - `/workspaces/[id]`, the members page (`WorkspaceMembers`): add by email, remove members, pending invites with Cancel. The dashboard card's member count links to it.
+    - `/workspaces/[id]`, the members page (`WorkspaceMembers`): add by email, remove members, pending invites with Cancel. Reached from a **Members & invites (n)** button on each dashboard card and at the top of every project page (**Members (n)** for non-owners). The first version only had a small grey link on the dashboard, which the user couldn't find.
     - `/invite` (`InviteAcceptance`): looks the invite up, then offers sign-up (email locked) or login with accept, or **Join** for the invited account. A different logged-in account is told the invite isn't theirs.
     - `RegisterForm` and `LoginForm` take optional invite props
     - `WorkspaceInvite` / `InvitePreview` / `JoinedWorkspace` in `types/api.ts`
