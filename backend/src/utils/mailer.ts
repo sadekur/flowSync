@@ -16,6 +16,12 @@ export interface MailMessage {
 export const testOutbox: MailMessage[] = [];
 
 /**
+ * Under NODE_ENV=test, the next `failNext` sends throw instead of landing in
+ * testOutbox, so tests can cover a provider outage. Reset by resetData().
+ */
+export const testMailControl = { failNext: 0 };
+
+/**
  * Why `value` can't be used as SMTP_URL, or null if it can. The answer never
  * contains the value itself: SMTP_URL holds a password, and this text ends up
  * in logs.
@@ -80,6 +86,10 @@ function getTransporter(): Transporter | null {
 
 export async function sendMail(message: MailMessage): Promise<void> {
   if (env.NODE_ENV === "test") {
+    if (testMailControl.failNext > 0) {
+      testMailControl.failNext -= 1;
+      throw new Error("SMTP send failed: simulated by a test");
+    }
     testOutbox.push(message);
     return;
   }

@@ -54,4 +54,5 @@ export async function resetData(): Promise<void> {
   await Promise.all(Object.values(mongoose.connection.collections).map((c) => c.deleteMany({})));
   await redis.flushdb();
   testOutbox.length = 0;
+  testMailControl.failNext = 0;
 }
