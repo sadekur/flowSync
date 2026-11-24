@@ -89,6 +89,15 @@ export async function registerUser(baseUrl: string, name = "user"): Promise<Test
   return { client, id: res.body.user._id ?? res.body.user.id, name, email, password };
 }
 
+/**
+ * Marks the account's email verified, as clicking its verification link
+ * would. Only verified accounts are added to a workspace at once; anyone else
+ * gets an invite (see services/invite.service.ts).
+ */
+export async function markVerified(user: TestUser): Promise<void> {
+  await User.updateOne({ _id: user.id }, { $set: { emailVerifiedAt: new Date() } });
+}
+
 export interface Fixture {
   owner: TestUser;
   member: TestUser;
@@ -114,6 +123,7 @@ export async function createFixture(baseUrl: string): Promise<Fixture> {
   if (ws.status !== 201) throw new Error(`workspace create failed: ${ws.status}`);
   const workspace = ws.body.workspace;
 
+  await markVerified(member);
   const add = await owner.client.post(`/api/workspaces/${workspace._id}/members`, { email: member.email });
   if (add.status !== 200) throw new Error(`add member failed: ${add.status}`);
 
